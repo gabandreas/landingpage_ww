@@ -9,6 +9,10 @@ type ButtonLinkProps = {
   children: ReactNode;
   variant?: ButtonVariant;
   className?: string;
+
+  // tambah ini ⬇
+  target?: string;
+  rel?: string;
 };
 
 const baseStyles =
@@ -28,14 +32,17 @@ export function ButtonLink({
   children,
   variant = "primary",
   className = "",
+  target,     // ⬅ tambahan
+  rel,        // ⬅ tambahan
 }: ButtonLinkProps) {
   return (
     <Link
       href={href}
+      target={target}   // ⬅ forward props
+      rel={rel}         // ⬅ forward props
       className={`${baseStyles} ${variantStyles[variant]} ${className}`.trim()}
     >
       {children}
     </Link>
   );
 }
-
