@@ -3,76 +3,78 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { useLanguage } from '@/context/LanguageContext'; // 1. Import Context
+import { useLanguage } from '@/context/LanguageContext';
 
-// 2. Data Film (Category diubah jadi 'key' agar bisa ditranslate)
+// Agar TypeScript tidak error saat indexing category, kita buat tipe datanya
+type CategoryKey = 'trending' | 'new' | 'action' | 'scifi' | 'drama' | 'adventure' | 'comedy' | 'thriller' | 'family' | 'fantasy';
+
 const movies = [
   { 
     title: "Sight Unseen", 
     image: "/images/sight_unseen.jpg", 
-    video: "/videos/GhostBusters.mp4",
-    category: "trending" // key
+    video: "/videos/Sight_Unseen.mp4", // Pastikan nama file video sesuai file kamu
+    category: "trending" as CategoryKey 
   },
   { 
     title: "Wicked", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "new" 
+    category: "new" as CategoryKey 
   },
   { 
     title: "Movie 3", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "action" 
+    category: "action" as CategoryKey 
   },
   { 
     title: "Movie 4", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "scifi" 
+    category: "scifi" as CategoryKey 
   },
   { 
     title: "Movie 5", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "drama" 
+    category: "drama" as CategoryKey 
   },
   { 
     title: "Movie 6", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "adventure" 
+    category: "adventure" as CategoryKey 
   },
   { 
     title: "Movie 7", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "comedy" 
+    category: "comedy" as CategoryKey 
   },
   { 
     title: "Movie 8", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "thriller" 
+    category: "thriller" as CategoryKey 
   },
   { 
     title: "Movie 9", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "family" 
+    category: "family" as CategoryKey 
   },
   { 
     title: "Movie 10", 
     image: "/images/wicked.jpg", 
     video: "/videos/wicked.mp4",
-    category: "fantasy" 
+    category: "fantasy" as CategoryKey 
   },
 ];
 
 // 3. Kamus Bahasa
 const content = {
   en: {
-    // tagline: "What You Can Watch",
+    tagline: "What You Can Watch", // <--- JANGAN DI COMMENT
     title: "Originals, films, and events.",
     description: "Explore our vast library. Hover over any poster to preview the content instantly.",
     categories: {
@@ -89,7 +91,7 @@ const content = {
     }
   },
   id: {
-    // tagline: "Tontonan Pilihan",
+    tagline: "Tontonan Pilihan", // <--- JANGAN DI COMMENT
     title: "Film asli, bioskop, dan acara.",
     description: "Jelajahi pustaka luas kami. Arahkan kursor ke poster mana pun untuk melihat cuplikan instan.",
     categories: {
@@ -124,7 +126,7 @@ export function ContentHighlights() {
     <section
       id="content"
       className="w-full bg-[#040714] px-6 py-20 lg:py-24"
-      aria-label="Content Highlights" // SEO Accessibility
+      aria-label="Content Highlights"
     >
       <div className="mx-auto w-full max-w-7xl">
         
@@ -152,9 +154,8 @@ export function ContentHighlights() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
           {movies.map((movie, index) => {
             const isHovered = hoveredMovieIndex === index;
-            // Ambil nama kategori yang sudah ditranslate
-            // @ts-ignore (untuk menghindari error typescript sederhana pada indexing object)
-            const categoryName = t.categories[movie.category] || movie.category;
+            // Ambil nama kategori yang sudah ditranslate dengan aman
+            const categoryName = t.categories[movie.category];
 
             return (
               <motion.article
@@ -171,7 +172,7 @@ export function ContentHighlights() {
                 {/* 1. Poster Image */}
                 <Image
                   src={movie.image}
-                  alt={`${movie.title} Poster`} // SEO: Alt text deskriptif
+                  alt={`${movie.title} Poster`}
                   fill
                   className={`object-cover transition-opacity duration-500 ${
                     isHovered ? 'opacity-0' : 'opacity-100'

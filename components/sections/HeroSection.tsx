@@ -337,7 +337,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
           >
-            {currentContent.disclaimer}
+            {/* {currentContent.disclaimer} */}
           </motion.p>
         </motion.div>
       </div>
