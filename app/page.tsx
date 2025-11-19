@@ -1,23 +1,31 @@
+'use client'; // <--- WAJIB ADA
+
+// Sesuaikan path import ini dengan lokasi file kamu sebenarnya
+// Jika file ada di folder context sejajar app, pakai "../context/..."
+import { LanguageProvider } from "@/context/LanguageContext"; 
+
 import { ContentHighlights } from "@/components/sections/ContentHighlights";
 import { FeaturesSection } from "@/components/sections/FeaturesSection";
 import { Footer } from "@/components/sections/Footer";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { HowItWorks } from "@/components/sections/HowItWorks";
-import { Navbar } from "@/components/sections/Navbar";
-import { PricingSection } from "@/components/sections/PricingSection";
+import { CompatibleDevicesSection } from "@/components/sections/PricingSection";
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0b0b0c]">
-      <Navbar />
-      <main className="flex flex-col gap-10 pb-20 pt-24">
-        <HeroSection />
-        <FeaturesSection />
-        <HowItWorks />
-        <ContentHighlights />
-        <PricingSection />
-        <Footer />
-      </main>
-    </div>
+    // 👇👇👇 PEMBUNGKUS INI JANGAN SAMPAI HILANG 👇👇👇
+    <LanguageProvider>
+      <div className="relative min-h-screen overflow-hidden bg-[#040714]">
+        <main className="flex flex-col gap-10">
+          <HeroSection />
+          <FeaturesSection />
+          <HowItWorks />
+          <ContentHighlights />
+          <CompatibleDevicesSection />
+          <Footer />
+        </main>
+      </div>
+    </LanguageProvider>
+    // 👆👆👆 PEMBUNGKUS DITUTUP DISINI 👆👆👆
   );
 }

@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --ww-bg: #0b0b0c;
-  --ww-surface: #111113;
-  --ww-muted: #1a1a1d;
+  /* UPDATED: Menyamakan dengan warna section (#040714) agar seamless */
+  /* --ww-bg: #040714;
+  --ww-surface: #0a0f1c;
+  --ww-muted: #1a1a1d; */
   --ww-border: rgba(255, 255, 255, 0.08);
   --ww-text-primary: #ffffff;
-  --ww-text-secondary: #b3b3b3;
+  --ww-text-secondary: #94a3b8;
   --ww-accent: #007aff;
   --ww-accent-soft: #28c2ff;
   --ww-font-sans: "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI",
@@ -15,6 +16,10 @@
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -26,55 +31,72 @@ body {
   line-height: 1.6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* Mencegah horizontal scroll yang tidak diinginkan */
 }
 
 ::selection {
-  background-color: rgba(40, 194, 255, 0.35);
+  background-color: rgba(40, 194, 255, 0.2);
   color: var(--ww-text-primary);
 }
 
+/* --- UTILITIES --- */
+
+/* Glass Effect yang lebih bersih */
 .glass-panel {
-  border: 1px solid var(--ww-border);
-  background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.08),
-      rgba(255, 255, 255, 0)
-    ),
-    rgba(11, 11, 12, 0.85);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(28px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
+/* Ambient Light: Menggunakan fixed background color body agar menyatu */
 .soft-light {
-  background: radial-gradient(
-      circle at 20% -10%,
-      rgba(40, 194, 255, 0.35),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at 80% 0%,
-      rgba(0, 122, 255, 0.2),
-      transparent 45%
-    ),
-    var(--ww-bg);
+  background-color: var(--ww-bg);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(40, 194, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 100% 0%, rgba(0, 122, 255, 0.05) 0%, transparent 40%);
 }
 
+/* Hero Highlight: Dibuat lebih subtle agar tidak terlihat "menimpa" */
 .hero-highlight {
   position: relative;
-  isolation: isolate;
 }
 
-.hero-highlight::after {
+.hero-highlight::before {
   content: "";
   position: absolute;
-  inset: -40% -10% auto -10%;
-  height: 420px;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 800px;
+  height: 400px;
   background: radial-gradient(
-    circle,
-    rgba(40, 194, 255, 0.35),
-    rgba(11, 11, 12, 0)
+    ellipse at center,
+    rgba(40, 194, 255, 0.15) 0%,
+    rgba(40, 194, 255, 0) 70%
   );
-  filter: blur(60px);
-  opacity: 0.75;
-  z-index: -1;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* --- SCROLLBAR CUSTOMIZATION (Premium Look) --- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ww-bg); 
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  border: 2px solid var(--ww-bg); /* Memberikan jarak padding visual */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }

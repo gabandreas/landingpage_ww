@@ -1,84 +1,54 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
-import { ButtonLink } from '../ui/ButtonLink';
-
-const floatingBadges = [
-  {
-    label: 'Dolby Atmos',
-    detail: 'Spatial audio ready',
-    className: 'right-4 top-10',
-    duration: 8,
-    delay: 0,
-  },
-  {
-    label: 'Ultra 4K',
-    detail: 'Dynamic range',
-    className: 'left-6 top-[46%]',
-    duration: 7,
-    delay: 0.6,
-  },
-  {
-    label: 'Secure Sync',
-    detail: 'Profiles linked',
-    className: 'right-6 bottom-10',
-    duration: 9,
-    delay: 1,
-  },
-];
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { useRef, useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useLanguage } from '@/context/LanguageContext'; 
 
 const getAppStoreUrl = () => {
-    // URL toko aplikasi
-    const iOS_URL = "https://apps.apple.com/id/app/wewatch-everywhere/id1533557464"; 
-    const ANDROID_URL = "https://play.google.com/store/apps/details?id=com.wewatch.android&pcampaignid=web_share";
-    const HUAWEI_URL = "https://appgallery.huawei.com/app/C104739437";
-    
-    // Default arahkan ke App Store untuk desktop
-    const DESKTOP_DEFAULT_URL = HUAWEI_URL; // Default ke App Store untuk desktop
-    
-    console.log('=== getAppStoreUrl dipanggil ===');
-    
-    if (typeof window !== 'undefined') {
-      const userAgent = window.navigator.userAgent.toLowerCase();
-      const isMobile = /iphone|ipad|ipod|android|huawei|matepad|honor|harmonyos/i.test(userAgent);
-      
-      console.log('User Agent:', userAgent);
-      
-      // Deteksi perangkat mobile
-      if (isMobile) {
-        const isIOS = /iphone|ipad|ipod/.test(userAgent);
-        const isHuawei = /huawei|matepad|honor|harmonyos/.test(userAgent);
-        const isAndroid = /android/.test(userAgent);
+  const iOS_URL = "https://apps.apple.com/id/app/wewatch-everywhere/id1533557464"; 
+  return iOS_URL;
+};
 
-        console.log('Hasil Deteksi Mobile - isIOS:', isIOS, '| isHuawei:', isHuawei, '| isAndroid:', isAndroid);
-
-        if (isIOS) {
-          console.log('Mengarahkan ke App Store:', iOS_URL);
-          return iOS_URL;
-        }
-        if (isHuawei) {
-          console.log('Mengarahkan ke AppGallery Huawei:', HUAWEI_URL);
-          return HUAWEI_URL;
-        }
-        if (isAndroid) {
-          console.log('Mengarahkan ke Google Play Store:', ANDROID_URL);
-          return ANDROID_URL;
-        }
-      }
-      
-      // Default untuk desktop atau perangkat yang tidak dikenali
-      console.log('Menggunakan URL default untuk desktop:', DESKTOP_DEFAULT_URL);
-      return DESKTOP_DEFAULT_URL;
-    }
-    
-    // Fallback untuk SSR
-    console.log('Window tidak tersedia (mungkin SSR). Menggunakan URL default desktop.');
-    return iOS_URL;
+const content = {
+  en: {
+    title: "Unlimited Entertainment",
+    subtitle: "Here. There. Everywhere",
+    cta: "Start Your Free Trial",
+    placeholder: "812 3456 7890",
+    submit: "Get Started",
+    // disclaimer: "Free trial available for new subscribers only. Terms apply.",
+    features: [
+      { title: "Live TV", image: "/images/livestreaming.png" },
+      { title: "Video On Demand", image: "/images/vod.png" },
+      { title: "Short Drama", image: "/images/short_drama.png" }
+    ]
+  },
+  id: {
+    title: "Hiburan Tanpa Batas",
+    subtitle: "Disini. Disana. Dimana-mana",
+    cta: "Mulai Masa Percobaan",
+    placeholder: "812 3456 7890",
+    submit: "Mulai",
+    disclaimer: "Masa percobaan hanya untuk pelanggan baru. Syarat dan ketentuan berlaku.",
+    features: [
+      { title: "Saluran TV", image: "/images/livestreaming.png" },
+      { title: "Film", image: "/images/vod.png" },
+      { title: "Drama Pendek", image: "/images/short_drama.png" }
+    ]
+  }
 };
 
 export function HeroSection() {
-
+  const { language, setLanguage } = useLanguage(); 
+  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
+  
+  const [isInputMode, setIsInputMode] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  
+  // STATE BARU: Default +62, nanti berubah otomatis by IP
+  const [countryCode, setCountryCode] = useState("+62"); 
 
   const sectionRef = useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({
@@ -86,161 +56,291 @@ export function HeroSection() {
     offset: ['start end', 'end start'],
   });
 
-  const panelOffset = useTransform(scrollYProgress, [0, 1], [0, -80]);
-  const panelScale = useTransform(scrollYProgress, [0, 1], [1, 0.94]);
   const glowOpacity = useTransform(scrollYProgress, [0, 1], [0.85, 0.35]);
+  const currentContent = content[language];
+
+  // Effect 1: Deteksi IP User untuk Kode Negara
+  useEffect(() => {
+    const fetchCountryCode = async () => {
+      try {
+        // Fetch ke API publik (ipapi.co biasanya gratis dan akurat)
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        
+        // Jika berhasil dapat kode (misal: +62, +1, +65), update state
+        if (data.country_calling_code) {
+          setCountryCode(data.country_calling_code);
+        }
+      } catch (error) {
+        console.error("Gagal mendeteksi lokasi pengguna:", error);
+        // Jika gagal (misal adblocker), dia akan tetap pakai default +62
+      }
+    };
+
+    fetchCountryCode();
+  }, []);
+
+  // Effect 2: Auto-scroll feature pills
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHoveredItem(prev => prev === null || prev >= 2 ? 0 : prev + 1);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Regex: Hanya izinkan angka
+    if (/^\d*$/.test(value)) {
+      setPhoneNumber(value);
+    }
+  };
+
+  const handlePhoneSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phoneNumber.length < 8) {
+        alert(language === 'id' ? "Nomor terlalu pendek" : "Number too short");
+        return;
+    }
+    // Gabungkan Kode Negara (dari IP) + Nomor Inputan
+    const fullNumber = `${countryCode}${phoneNumber}`;
+    console.log("Nomor HP Submitted:", fullNumber);
+    alert(`Mengirim kode OTP ke: ${fullNumber}`);
+  };
 
   return (
     <section
       ref={sectionRef}
       id="home"
-      className="hero-highlight relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-24 sm:px-6 md:gap-12 lg:flex-row lg:items-center lg:py-32 lg:gap-16"
+      className="relative w-full overflow-hidden bg-[#040714] min-h-screen flex flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8"
     >
-      <motion.div
-        style={{ opacity: glowOpacity }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 90, ease: 'linear', repeat: Infinity }}
-        className="pointer-events-none absolute -left-10 top-10 h-[420px] w-[420px] rounded-full bg-[#28c2ff]/25 blur-[140px]"
-      />
-      <motion.div
-        style={{ opacity: glowOpacity }}
-        animate={{ rotate: -360 }}
-        transition={{ duration: 120, ease: 'linear', repeat: Infinity }}
-        className="pointer-events-none absolute right-[-80px] top-0 h-[360px] w-[360px] rounded-full bg-[#007aff]/20 blur-[160px]"
-      />
-      <div className="flex flex-1 flex-col gap-8">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-6"
-        >
-          <p className="text-xs uppercase tracking-[0.6em] text-white/50">
-            Premium Streaming
-          </p>
-          <h1 className="text-3xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-            Here. There. Everywhere.
-          </h1>
-          <p className="max-w-xl text-base text-white/70 sm:text-lg">
-            Discover cinematic stories, real-time premieres, and curated picks
-            built for the way you watch—across every screen, In WeWatch Platform.
-          </p>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ delay: 0.1, duration: 0.8 }}
-          className="flex flex-wrap gap-3 sm:gap-4"
-        >
-          <ButtonLink 
-            href={getAppStoreUrl()} // Menggunakan logika deteksi OS
-            variant="primary" 
-            target="_blank" 
-            rel="noopener noreferrer" 
+      {/* Navbar / Top Bar */}
+      <div className="fixed top-0 left-0 w-full z-50 flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+        <div className="h-10 w-32 relative pointer-events-auto">
+          <Image
+            src="/images/wewatch_logo2.png"
+            alt="WeWatch"
+            fill
+            className="object-contain object-left"
+            priority
+          />
+        </div>
+        <div className="relative pointer-events-auto">
+          <button 
+            onClick={() => setShowLangDropdown(!showLangDropdown)}
+            className="flex items-center space-x-2 px-4 py-2 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 transition-colors duration-200 backdrop-blur-md"
           >
-            Get Started
-          </ButtonLink>
-          <ButtonLink href="#features" variant="secondary">
-            Explore Plans
-          </ButtonLink>
-        </motion.div>
+            <span className="text-sm font-medium text-white">
+              {language === 'id' ? 'Bahasa' : 'English'}
+            </span>
+            <svg className={`w-4 h-4 text-white transition-transform duration-200 ${showLangDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          <AnimatePresence>
+            {showLangDropdown && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute right-0 mt-2 w-40 rounded-lg bg-[#040714] border border-white/10 backdrop-blur-lg shadow-xl overflow-hidden z-50"
+              >
+                <button onClick={() => { setLanguage('en'); setShowLangDropdown(false); }} className={`w-full text-left px-4 py-2 text-sm ${language === 'en' ? 'bg-blue-600/20 text-blue-400' : 'text-white hover:bg-white/5'}`}>English (EN)</button>
+                <button onClick={() => { setLanguage('id'); setShowLangDropdown(false); }} className={`w-full text-left px-4 py-2 text-sm ${language === 'id' ? 'bg-blue-600/20 text-blue-400' : 'text-white hover:bg-white/5'}`}>Bahasa Indonesia (ID)</button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Background Animation */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ delay: 0.2, duration: 0.7 }}
-          className="flex flex-wrap gap-4 text-sm text-white/60 sm:gap-6 sm:flex-nowrap"
+          style={{ opacity: glowOpacity }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 120, ease: 'linear', repeat: Infinity }}
+          className="absolute inset-0 bg-gradient-to-br from-[#28c2ff]/5 via-transparent to-[#28c2ff]/5"
+        />
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white/5"
+            style={{
+              width: Math.random() * 8 + 4 + 'px',
+              height: Math.random() * 8 + 4 + 'px',
+              left: Math.random() * 100 + '%',
+              top: Math.random() * 100 + '%',
+            }}
+            animate={{
+              y: [0, (Math.random() - 0.5) * 100],
+              x: [0, (Math.random() - 0.5) * 50],
+              opacity: [0.2, 0.8, 0.2],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              repeatType: 'reverse',
+              ease: 'easeInOut',
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* === MAIN HERO CONTENT === */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto text-center mt-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="space-y-8 px-4"
         >
-          <div>
-            <p className="text-white">4K HDR</p>
-            <span>Dolby Vision</span>
+          <motion.h1 
+            className="text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            {currentContent.title}
+          </motion.h1>
+          
+          <div className="relative inline-block">
+            <motion.p 
+              className="mx-auto max-w-2xl text-xl text-gray-300 sm:text-2xl relative inline-block"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              {currentContent.subtitle}
+              <motion.span 
+                className="absolute left-0 -bottom-1 w-0 h-px bg-gradient-to-r from-[#28c2ff] via-[#007aff] to-[#28c2ff]"
+                initial={{ width: 0 }}
+                animate={{ width: '100%' }}
+                transition={{ delay: 1, duration: 1, ease: [0.19, 1.0, 0.22, 1.0] }}
+              />
+            </motion.p>
           </div>
-          <div>
-            <p className="text-white">Offline</p>
-            <span>Secure downloads</span>
+          
+          {/* Feature Pills */}
+          <motion.div 
+            className="flex flex-wrap justify-center gap-6 mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            {currentContent.features.map((feature, i) => (
+              <div 
+                key={i}
+                className={`relative group overflow-hidden rounded-xl w-40 h-24 transition-all duration-300 ${
+                  hoveredItem === i ? 'ring-2 ring-blue-500 scale-105' : 'ring-1 ring-white/10'
+                }`}
+                onMouseEnter={() => setHoveredItem(i)}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <div className="absolute inset-0">
+                  <img 
+                    src={feature.image} 
+                    alt={feature.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder.jpg'; }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-2 text-white text-sm font-medium text-center">
+                  {feature.title}
+                </div>
+              </div>
+            ))}
+          </motion.div>
+          
+          {/* === CTA BUTTON & INPUT TRANSITION === */}
+          <div className="mt-10 h-20 flex justify-center items-center relative w-full max-w-lg mx-auto">
+            <AnimatePresence mode='wait'>
+              {!isInputMode ? (
+                // MODE 1: TOMBOL CTA (Awal) - Style Glassmorphism
+                <motion.button
+                  key="cta-button"
+                  onClick={() => setIsInputMode(true)}
+                  className="px-8 py-4 text-lg font-semibold text-white rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105 active:scale-95"
+                  initial={{ x: 0, opacity: 1 }}
+                  exit={{ x: -50, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  {currentContent.cta}
+                </motion.button>
+              ) : (
+                // MODE 2: INPUT FORM
+                <motion.form
+                  key="input-form"
+                  onSubmit={handlePhoneSubmit}
+                  className="relative flex w-full max-w-md items-center"
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: 50, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  <div className="relative w-full flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-full p-1 pr-1 shadow-2xl">
+                     
+                     {/* Icon Phone */}
+                     <div className="pl-4 text-gray-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                     </div>
+
+                     {/* Kode Negara (Dinamis by IP) */}
+                     <div className="flex items-center px-3 border-r border-white/20 h-6">
+                        {/* Tampilkan kode negara yang didapat dari API */}
+                        <span className="text-white font-medium">{countryCode}</span>
+                     </div>
+                     
+                     {/* Input Field */}
+                     <input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={handlePhoneChange}
+                        placeholder={currentContent.placeholder}
+                        className="w-full bg-transparent border-none outline-none text-white placeholder-gray-400 text-base py-3 pl-3"
+                        autoFocus
+                        maxLength={15}
+                     />
+
+                     {/* Submit Button */}
+                     <button 
+                       type="submit"
+                       className="ml-2 p-3 rounded-full text-white bg-white/10 border border-white/20 hover:bg-white/20 transition-all hover:scale-110 active:scale-90 flex-shrink-0"
+                     >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                     </button>
+                  </div>
+                  
+                  {/* Tombol Cancel (X) */}
+                  <button 
+                    type="button"
+                    onClick={() => setIsInputMode(false)}
+                    className="absolute -right-8 text-gray-500 hover:text-white transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </div>
-          <div>
-            <p className="text-white">Profiles</p>
-            <span>Personal recommendations</span>
-          </div>
+          
+          <motion.p 
+            className="text-sm text-gray-500 mt-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            {currentContent.disclaimer}
+          </motion.p>
         </motion.div>
       </div>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ delay: 0.1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-8 flex w-full flex-1 lg:mt-0"
-      >
-        <motion.div
-          style={{ y: panelOffset, scale: panelScale }}
-          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-          className="glass-panel relative w-full overflow-hidden rounded-[32px] border-white/10 bg-[linear-gradient(135deg,rgba(17,17,19,0.8),rgba(17,17,19,0.3))] p-8"
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(40,194,255,0.3),_transparent_65%)]" />
-          <div className="relative flex flex-col gap-6">
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-white/40">
-                  Live Now
-                </p>
-                <p className="text-lg text-white">The Horizon Archive</p>
-              </div>
-              <span className="rounded-full bg-white/15 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/60">
-                Ultra
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              {['Pulse', 'Nova', 'Eclipse'].map((title, index) => (
-                <motion.div
-                  key={title}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.4 }}
-                  transition={{ delay: 0.15 * index, duration: 0.6 }}
-                  whileHover={{ scale: 1.02 }}
-                  className="group relative h-40 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/10 to-black/40"
-                >
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(40,194,255,0.4),_transparent_70%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.6))]" />
-                  <div className="relative flex h-full flex-col justify-end p-3">
-                    <p className="text-xs uppercase tracking-[0.4em] text-white/40">
-                      {index + 1}
-                    </p>
-                    <p className="text-sm font-medium">{title}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
-              Curated by WeWatch Studios · Originals, documentaries, and events
-              refreshed daily.
-            </div>
-          </div>
-          {floatingBadges.map((badge) => (
-            <motion.div
-              key={badge.label}
-              className={`pointer-events-none absolute ${badge.className} z-10 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/70 backdrop-blur`}
-              animate={{ y: ['0%', '-12%', '0%'] }}
-              transition={{
-                duration: badge.duration,
-                repeat: Infinity,
-                repeatType: 'mirror',
-                ease: 'easeInOut',
-                delay: badge.delay,
-              }}
-            >
-              <div className="text-[10px] text-white/50">{badge.label}</div>
-              <div className="text-[11px] font-semibold tracking-[0.1em] text-white">
-                {badge.detail}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </motion.div>
     </section>
   );
 }
-

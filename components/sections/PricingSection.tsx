@@ -1,110 +1,130 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ButtonLink } from '../ui/ButtonLink';
+import { ReactNode } from 'react';
+import { useLanguage } from '@/context/LanguageContext'; // 1. Import Context
 
-const plans = [
-  {
-    name: 'Signature',
-    price: '$14',
-    cadence: '/month',
-    features: [
-      '4K HDR + Dolby Vision',
-      'Two devices simultaneous',
-      'Offline vault access',
-      'Priority premiere alerts',
-    ],
-    accent: false,
-  },
-  {
-    name: 'Studio',
-    price: '$24',
-    cadence: '/month',
-    features: [
-      'Unlimited devices',
-      'Live events in Atmos',
-      'Invite-only screenings',
-      'White-glove concierge',
-    ],
-    accent: true,
-  },
+// 2. Pisahkan Ikon (Tetap sama visualnya)
+const deviceIcons: ReactNode[] = [
+  // Icon 1: TV
+  (
+    <svg viewBox="0 0 24 24" fill="none" className="h-16 w-16 text-white/80" stroke="currentColor" strokeWidth="1">
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+      <path d="M8 21h8" strokeLinecap="round" />
+      <path d="M12 17v4" strokeLinecap="round" />
+    </svg>
+  ),
+  // Icon 2: Computer
+  (
+    <svg viewBox="0 0 24 24" fill="none" className="h-16 w-16 text-white/80" stroke="currentColor" strokeWidth="1">
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M2 20h20" strokeLinecap="round" />
+    </svg>
+  ),
+  // Icon 3: Mobile
+  (
+    <svg viewBox="0 0 24 24" fill="none" className="h-16 w-16 text-white/80" stroke="currentColor" strokeWidth="1">
+      <rect x="7" y="2" width="10" height="20" rx="2" />
+      <path d="M12 18h.01" strokeLinecap="round" strokeWidth="2" />
+    </svg>
+  ),
 ];
 
-export function PricingSection() {
+// 3. Kamus Bahasa
+const content = {
+  en: {
+    title: "Compatible devices",
+    categories: [
+      {
+        name: 'TV',
+        items: ['Android TV', 'Apple TV', 'Chromecast', 'LG TV', 'Samsung'],
+      },
+      {
+        name: 'Computer',
+        items: ['Chrome OS', 'MacOS', 'Windows PC'],
+      },
+      {
+        name: 'Mobile & Tablet',
+        items: ['Android Phones & Tablets', 'iPhone and iPad'],
+      },
+    ]
+  },
+  id: {
+    title: "Perangkat yang Kompatibel",
+    categories: [
+      {
+        name: 'TV',
+        items: ['Android TV', 'Apple TV', 'Chromecast', 'TV LG', 'Samsung'],
+      },
+      {
+        name: 'Komputer',
+        items: ['Chrome OS', 'MacOS', 'Windows PC'],
+      },
+      {
+        name: 'Ponsel & Tablet',
+        items: ['Ponsel & Tablet Android', 'iPhone dan iPad'],
+      },
+    ]
+  }
+};
+
+export function CompatibleDevicesSection() {
+  // 4. Panggil Hook
+  const { language } = useLanguage();
+  const t = content[language];
+
   return (
     <section
-      id="pricing"
-      className="mx-auto w-full max-w-6xl px-6 py-20 lg:py-24"
+      id="devices"
+      className="w-full bg-[#040714] px-6 py-24 lg:py-32"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.5 }}
-        transition={{ duration: 0.8 }}
-        className="mb-12 flex flex-col gap-3"
-      >
-        <p className="text-xs uppercase tracking-[0.4em] text-white/50">
-          Pricing
-        </p>
-        <h2 className="text-3xl font-semibold text-white sm:text-4xl">
-          Choose the way you watch.
-        </h2>
-        <p className="max-w-2xl text-white/70">
-          Every plan is crafted for cinematic fidelity. Upgrade or downgrade any
-          time from your profile hub.
-        </p>
-      </motion.div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        {plans.map((plan, index) => (
-          <motion.div
-            key={plan.name}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -8, scale: 1.01 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ delay: index * 0.1, duration: 0.8 }}
-            className={`rounded-3xl p-8 ${
-              plan.accent ? 'glass-panel border-white/20' : 'glass-panel'
-            }`}
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.6em] text-white/50">
-                  Plan
-                </p>
-                <h3 className="text-2xl font-semibold text-white">
-                  {plan.name}
-                </h3>
-              </div>
-              {plan.accent && (
-                <span className="rounded-full border border-white/30 px-4 py-1 text-xs uppercase tracking-[0.4em] text-white/70">
-                  Most Selected
-                </span>
-              )}
-            </div>
-            <div className="mb-6 flex items-end gap-2">
-              <p className="text-5xl font-semibold text-white">{plan.price}</p>
-              <span className="text-white/60">{plan.cadence}</span>
-            </div>
-            <ul className="mb-8 space-y-3 text-sm text-white/70">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-3">
-                  <span className="h-2 w-2 rounded-full bg-gradient-to-r from-[#28c2ff] to-[#007aff]" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-            {/* <ButtonLink
-              href="#home"
-              variant={plan.accent ? 'primary' : 'secondary'}
-              className="w-full justify-center"
+      <div className="mx-auto max-w-6xl">
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.8 }}
+          className="mb-20 text-center"
+        >
+          <h2 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+            {t.title}
+          </h2>
+        </motion.div>
+
+        {/* Devices Grid */}
+        <div className="grid gap-12 md:grid-cols-3">
+          {t.categories.map((device, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ delay: index * 0.2, duration: 0.8 }}
+              className="flex flex-col items-center text-center group"
             >
-              Start Watching
-            </ButtonLink> */}
-          </motion.div>
-        ))}
+              {/* Icon Wrapper */}
+              <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-3xl transition-transform duration-500 group-hover:scale-110 group-hover:bg-white/5">
+                {deviceIcons[index]}
+              </div>
+
+              {/* Category Title */}
+              <h3 className="mb-6 text-xl font-semibold text-white">
+                {device.name}
+              </h3>
+
+              {/* List of Devices */}
+              <ul className="space-y-3">
+                {device.items.map((item) => (
+                  <li key={item} className="text-gray-400 text-lg font-light leading-relaxed">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
-
