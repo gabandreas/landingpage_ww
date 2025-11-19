@@ -8,8 +8,8 @@ import { ContentHighlights } from "@/components/sections/ContentHighlights";
 import { FeaturesSection } from "@/components/sections/FeaturesSection";
 import { Footer } from "@/components/sections/Footer";
 import { HeroSection } from "@/components/sections/HeroSection";
-import { HowItWorks } from "@/components/sections/HowItWorks";
-import { CompatibleDevicesSection } from "@/components/sections/PricingSection";
+import { HowItWorks } from "@/components/sections/Discovery";
+import { CompatibleDevicesSection } from "@/components/sections/DevicesSection";
 
 export default function Home() {
   return (
