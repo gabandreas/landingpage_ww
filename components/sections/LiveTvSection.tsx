@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useState, useEffect, useRef, MouseEvent, TouchEvent, ReactNode, useCallback } from 'react';
+// IMPORT HLS
+import Hls from 'hls.js';
 
 // --- DATA CHANNEL ---
 const channels = [
@@ -84,6 +86,66 @@ const content = {
 
 const DAILY_LIMIT_SECONDS = 60;
 
+// --- COMPONENT HLS PLAYER KHUSUS (UNTUK COMPATIBILITY) ---
+function HlsVideoPlayer({ src, onCanPlay, className }: { src: string, onCanPlay: () => void, className?: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let hls: Hls | null = null;
+
+    // Cek 1: Apakah browser mendukung HLS secara native (Safari)
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;
+      // Handle play promise untuk menghindari error autoplay
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+           // Auto-play was prevented, usually handled by muting
+        });
+      }
+    } 
+    // Cek 2: Jika tidak native, gunakan Hls.js (Chrome/Edge/Firefox)
+    else if (Hls.isSupported()) {
+      hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+      });
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {});
+        }
+      });
+    }
+
+    // Cleanup saat unmount
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [src]);
+
+  return (
+    <video
+      ref={videoRef}
+      className={className}
+      muted
+      loop
+      playsInline
+      onCanPlay={onCanPlay}
+      // style={{ pointerEvents: 'none' }} // Opsional: agar tidak bisa diklik kanan
+    />
+  );
+}
+
+
+// --- MAIN COMPONENT ---
 export function LiveTVSection() {
   const { language } = useLanguage();
   const t = content[language];
@@ -91,7 +153,6 @@ export function LiveTVSection() {
   // UI State
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
-  // Ref untuk Debounce Hover (Optimasi Network)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Modal & Timer State
@@ -107,20 +168,16 @@ export function LiveTVSection() {
   const [scrollLeft, setScrollLeft] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const autoScrollRef = useRef<number | null>(null);
-  
   const hasMoved = useRef(false);
 
-  // Duplikasi Channel (Memoized biar ga render ulang array terus)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const infiniteChannels = [...channels, ...channels, ...channels, ...channels];
 
-  // 1. OPTIMIZED Auto Scroll (Animation Frame)
+  // Auto Scroll
   useEffect(() => {
     const scroll = () => {
       if (scrollContainerRef.current && isAutoScrolling && !isDown && !selectedChannel) {
-        scrollContainerRef.current.scrollLeft += 0.8; // Kecepatan
-        
-        // Reset position seamless
+        scrollContainerRef.current.scrollLeft += 0.8; 
         if (scrollContainerRef.current.scrollLeft >= (scrollContainerRef.current.scrollWidth / 2)) {
            scrollContainerRef.current.scrollLeft = 0;
         }
@@ -128,18 +185,14 @@ export function LiveTVSection() {
       autoScrollRef.current = requestAnimationFrame(scroll);
     };
     autoScrollRef.current = requestAnimationFrame(scroll);
-
     return () => {
       if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
     };
   }, [isAutoScrolling, isDown, selectedChannel]);
 
-  // --- OPTIMIZED HOVER HANDLER (DEBOUNCE) ---
+  // Hover Handler
   const handleMouseEnterCard = (index: number) => {
-    // Clear timeout sebelumnya jika user geser mouse cepat
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    
-    // Set timeout baru: Video baru load kalau mouse stay 300ms
     hoverTimeoutRef.current = setTimeout(() => {
       setHoveredIndex(index);
       setIsVideoLoading(true);
@@ -152,8 +205,7 @@ export function LiveTVSection() {
     setIsVideoLoading(false);
   };
 
-
-  // --- EVENT HANDLERS (Menggunakan useCallback untuk performa react) ---
+  // Mouse/Touch Handlers
   const handleMouseDown = useCallback((e: MouseEvent) => {
     setIsDown(true);
     setIsAutoScrolling(false);
@@ -178,7 +230,6 @@ export function LiveTVSection() {
     setIsAutoScrolling(true);
   }, []);
 
-  // Touch
   const handleTouchStart = useCallback((e: TouchEvent) => {
     setIsDown(true);
     setIsAutoScrolling(false);
@@ -198,10 +249,9 @@ export function LiveTVSection() {
   }, [isDown, startX, scrollLeft]);
 
 
-  // --- MODAL LOGIC ---
+  // Modal Logic
   const handleCardClick = (channel: typeof channels[0]) => {
     if (hasMoved.current) return;
-
     const today = new Date().toDateString();
     const storedDate = localStorage.getItem('ww_daily_date');
     const storedSeconds = parseInt(localStorage.getItem('ww_daily_seconds') || '0');
@@ -221,7 +271,6 @@ export function LiveTVSection() {
         setIsLimitReached(false);
       }
     }
-
     setSelectedChannel(channel);
     setIsAutoScrolling(false);
   };
@@ -239,7 +288,6 @@ export function LiveTVSection() {
           const newTime = prev - 1;
           const currentUsed = parseInt(localStorage.getItem('ww_daily_seconds') || '0');
           localStorage.setItem('ww_daily_seconds', (currentUsed + 1).toString());
-
           if (newTime <= 0) {
             setIsLimitReached(true);
             clearInterval(timerRef.current!);
@@ -257,10 +305,8 @@ export function LiveTVSection() {
 
   return (
     <section className="w-full bg-[#040714] py-12 md:py-20 border-t border-white/5 relative overflow-hidden flex flex-col gap-6 group/section">
-      
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-900/5 to-transparent pointer-events-none" />
 
-      {/* Header */}
       <div className="mx-auto max-w-7xl px-4 md:px-6 w-full relative z-10 flex flex-col justify-center items-center text-center mb-2 md:mb-4">
             <div className="flex items-center gap-3 mb-2 md:mb-3 justify-center">
                 <h2 className="text-2xl md:text-5xl font-bold text-white tracking-tight drop-shadow-xl">{t.title}</h2>
@@ -268,7 +314,7 @@ export function LiveTVSection() {
             <p className="text-gray-400 text-xs md:text-lg max-w-xl leading-relaxed px-4">{t.subtitle}</p>
       </div>
 
-      {/* --- DRAGGABLE SCROLL TRACK --- */}
+      {/* --- SCROLL TRACK --- */}
       <div 
         className="relative w-full"
         onMouseEnter={() => setIsAutoScrolling(false)}
@@ -276,7 +322,6 @@ export function LiveTVSection() {
       >
         <div 
           ref={scrollContainerRef}
-          // PERFORMANCE NOTE: will-change-scroll helps browser optimize rendering for scrolling element
           className="flex gap-4 md:gap-6 overflow-x-auto pb-4 px-4 md:px-6 cursor-grab active:cursor-grabbing no-scrollbar scroll-smooth will-change-scroll"
           style={{ scrollBehavior: isDown ? 'auto' : 'smooth' }}
           onMouseDown={handleMouseDown}
@@ -296,29 +341,24 @@ export function LiveTVSection() {
                  key={uniqueKey} 
                  onClick={() => handleCardClick(channel)}
                  className="relative flex-shrink-0 w-[260px] sm:w-[360px] aspect-[16/10] rounded-xl md:rounded-2xl overflow-hidden bg-[#0E1425] border border-white/5 group shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-blue-900/30"
-                 // PERFORMANCE: Pakai handler khusus yang ada Debounce-nya
                  onMouseEnter={() => handleMouseEnterCard(i)}
                  onMouseLeave={handleMouseLeaveCard}
                >
                  
-                 {/* 1. BACKGROUND (OPTIMIZED) */}
                  <div className="absolute inset-0 overflow-hidden">
                     <Image 
                        src={channel.image} 
-                       alt="" // Decorative, empty alt ok
+                       alt="" 
                        fill
-                       // PERFORMANCE: Quality 10 cukup untuk blur background (hemat size)
                        quality={10}
-                       // PERFORMANCE: Sizes prop agar browser download size yg sesuai
                        sizes="(max-width: 768px) 260px, 360px"
                        className="object-cover opacity-30 blur-2xl scale-125"
-                       priority={false} // Lazy load by default
+                       priority={false}
                     />
                     <div className="absolute inset-0 bg-black/40" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1c] via-transparent to-transparent" />
                  </div>
 
-                 {/* 2. VIDEO PREVIEW (Debounced & Lazy) */}
                  <AnimatePresence>
                    {isHovered && (
                      <motion.div
@@ -333,33 +373,26 @@ export function LiveTVSection() {
                                <div className="w-6 h-6 border-2 border-white/20 border-t-blue-500 rounded-full animate-spin" />
                            </div>
                         )}
-                       {/* Video element cuma muncul di DOM kalau isHovered true (setelah debounce) */}
-                       <video
-                           src={channel.streamUrl} 
-                           autoPlay
-                           muted
-                           loop
-                           playsInline
-                           // PERFORMANCE: Preload none karena kita load dynamic
-                           preload="none"
+                       
+                       {/* --- GANTI VIDEO BIASA DENGAN HLS PLAYER --- */}
+                       <HlsVideoPlayer
+                           src={channel.streamUrl}
                            className="w-full h-full object-cover opacity-90"
                            onCanPlay={() => setIsVideoLoading(false)}
                        />
+                       
                        <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)] pointer-events-none" />
                      </motion.div>
                    )}
                  </AnimatePresence>
                  
-                 {/* 3. CONTENT */}
                  <div className="absolute inset-0 z-20 p-4 md:p-6 flex flex-col justify-between pointer-events-none">
-                    {/* LIVE BADGE */}
                     <div className="flex justify-start">
                         <div className="bg-red-600/90 backdrop-blur-md px-2 py-0.5 md:px-2.5 rounded md:rounded-md text-[9px] md:text-[10px] font-bold text-white tracking-widest shadow-lg flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"/>
                             {t.live}
                         </div>
                     </div>
-                    {/* LOGO */}
                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-1/3 transition-all duration-500 ${isHovered ? 'md:opacity-0 md:scale-90' : 'opacity-100 scale-100'}`}>
                         <Image 
                             src={channel.logo} 
@@ -393,7 +426,6 @@ export function LiveTVSection() {
               className="relative w-full max-w-5xl bg-[#0a0f1c] rounded-xl md:rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex flex-col max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
-               {/* MODAL HEADER */}
                <div className="flex justify-between items-center p-3 md:p-4 bg-[#121826] border-b border-white/5">
                   <div className="flex items-center gap-3 md:gap-4">
                       <div className="relative h-6 w-16 md:h-8 md:w-24">
@@ -413,15 +445,19 @@ export function LiveTVSection() {
                   </div>
                </div>
 
-               {/* VIDEO PLAYER AREA */}
                <div className="relative w-full aspect-video bg-black flex items-center justify-center group">
                   {!isLimitReached ? (
-                     <video
-                        src={selectedChannel.streamUrl}
-                        autoPlay
-                        controls
-                        className="w-full h-full object-contain"
-                     />
+                     /* --- HLS PLAYER JUGA UNTUK MODAL --- */
+                     <div className="w-full h-full">
+                         <HlsVideoPlayer
+                            src={selectedChannel.streamUrl}
+                            className="w-full h-full object-contain"
+                            onCanPlay={() => {}}
+                         />
+                         {/* Note: Controls di HLS custom perlu setup lebih lanjut atau pakai library lengkap. 
+                             Tapi untuk HLS basic, 'controls' di tag video biasanya cukup di Chrome Desktop 
+                             setelah di-attach HLS.js. */}
+                     </div>
                   ) : (
                      <div className="absolute inset-0 z-20 bg-[#050505] flex flex-col items-center justify-center text-center p-6">
                         <div className="w-12 h-12 md:w-16 md:h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-3 md:mb-4 text-red-500">
@@ -458,7 +494,6 @@ export function LiveTVSection() {
         )}
       </AnimatePresence>
       
-      {/* CSS Utility for hiding scrollbar */}
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -475,7 +510,6 @@ interface StoreButtonProps {
   iconPath: ReactNode;
 }
 
-// Component Store Button yang ringan
 function StoreButton({ href, subText, mainText, iconPath }: StoreButtonProps) {
   return (
     <a 
