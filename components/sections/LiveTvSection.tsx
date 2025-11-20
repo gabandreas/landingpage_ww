@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useState, useEffect, useRef, MouseEvent, TouchEvent, ReactNode, useCallback } from 'react';
-// IMPORT HLS
 import Hls from 'hls.js';
 
 // --- DATA CHANNEL ---
@@ -46,8 +45,8 @@ const channels = [
   },
   { 
     name: "Kompas TV", 
-    logo: "/images/kompas.jpg", 
-    image: "/images/kompas.jpg", 
+    logo: "/images/kompas-removebg-preview.png", 
+    image: "/images/kompas-removebg-preview.png", 
     linkUrl: "#",
     streamUrl: "https://openindo.wewatch.asia/nl.m3u8?id=1050"
   },
@@ -86,7 +85,8 @@ const content = {
 
 const DAILY_LIMIT_SECONDS = 60;
 
-// --- COMPONENT HLS PLAYER KHUSUS (UNTUK COMPATIBILITY) ---
+// --- ROBUST HLS PLAYER COMPONENT ---
+// Komponen ini menangani semua logika player agar komponen utama bersih
 function HlsVideoPlayer({ src, onCanPlay, className }: { src: string, onCanPlay: () => void, className?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -96,37 +96,62 @@ function HlsVideoPlayer({ src, onCanPlay, className }: { src: string, onCanPlay:
 
     let hls: Hls | null = null;
 
-    // Cek 1: Apakah browser mendukung HLS secara native (Safari)
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = src;
-      // Handle play promise untuk menghindari error autoplay
+    // Logika Play yang Aman (Promise handling)
+    const attemptPlay = () => {
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-           // Auto-play was prevented, usually handled by muting
+        playPromise.catch((error) => {
+          console.warn("Autoplay prevented:", error);
+          // Biasanya gagal karena user belum interaksi (klik), tapi karena muted harusnya aman.
         });
       }
+    };
+
+    // 1. CEK SAFARI / NATIVE HLS (Prioritas Utama untuk Apple)
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;
+      video.addEventListener('loadedmetadata', attemptPlay);
     } 
-    // Cek 2: Jika tidak native, gunakan Hls.js (Chrome/Edge/Firefox)
+    // 2. CEK HLS.JS (Untuk Chrome/Edge/Firefox/Windows)
     else if (Hls.isSupported()) {
       hls = new Hls({
         enableWorker: true,
-        lowLatencyMode: true,
+        lowLatencyMode: true, // Mode latensi rendah untuk live
+        autoStartLoad: true,
       });
+      
       hls.loadSource(src);
       hls.attachMedia(video);
+      
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(() => {});
+        attemptPlay();
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          console.error("HLS Fatal Error:", data);
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hls?.startLoad(); // Coba start ulang kalau putus
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hls?.recoverMediaError(); // Coba recover
+              break;
+            default:
+              hls?.destroy();
+              break;
+          }
         }
       });
     }
 
-    // Cleanup saat unmount
+    // Cleanup saat video di-unmount (mouse leave)
     return () => {
-      if (hls) {
-        hls.destroy();
+      if (hls) hls.destroy();
+      if (video) {
+         video.removeEventListener('loadedmetadata', attemptPlay);
+         video.removeAttribute('src');
+         video.load(); // Stop buffering
       }
     };
   }, [src]);
@@ -135,11 +160,11 @@ function HlsVideoPlayer({ src, onCanPlay, className }: { src: string, onCanPlay:
     <video
       ref={videoRef}
       className={className}
-      muted
+      muted // WAJIB: Autoplay ga akan jalan kalau ga muted
+      playsInline // WAJIB: Agar jalan di Safari iPhone
       loop
-      playsInline
+      // crossOrigin="anonymous" // Kadang diperlukan, tapi kadang bikin error CORS. Coba uncomment jika masih gagal.
       onCanPlay={onCanPlay}
-      // style={{ pointerEvents: 'none' }} // Opsional: agar tidak bisa diklik kanan
     />
   );
 }
@@ -161,7 +186,7 @@ export function LiveTVSection() {
   const [isLimitReached, setIsLimitReached] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- SCROLL & DRAG STATE ---
+  // Scroll & Drag State
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDown, setIsDown] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -173,7 +198,7 @@ export function LiveTVSection() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const infiniteChannels = [...channels, ...channels, ...channels, ...channels];
 
-  // Auto Scroll
+  // Auto Scroll Logic
   useEffect(() => {
     const scroll = () => {
       if (scrollContainerRef.current && isAutoScrolling && !isDown && !selectedChannel) {
@@ -190,7 +215,7 @@ export function LiveTVSection() {
     };
   }, [isAutoScrolling, isDown, selectedChannel]);
 
-  // Hover Handler
+  // Hover Logic (Debounced)
   const handleMouseEnterCard = (index: number) => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     hoverTimeoutRef.current = setTimeout(() => {
@@ -205,7 +230,7 @@ export function LiveTVSection() {
     setIsVideoLoading(false);
   };
 
-  // Mouse/Touch Handlers
+  // Drag Logic
   const handleMouseDown = useCallback((e: MouseEvent) => {
     setIsDown(true);
     setIsAutoScrolling(false);
@@ -247,7 +272,6 @@ export function LiveTVSection() {
       scrollContainerRef.current.scrollLeft = scrollLeft - walk;
     }
   }, [isDown, startX, scrollLeft]);
-
 
   // Modal Logic
   const handleCardClick = (channel: typeof channels[0]) => {
@@ -344,7 +368,6 @@ export function LiveTVSection() {
                  onMouseEnter={() => handleMouseEnterCard(i)}
                  onMouseLeave={handleMouseLeaveCard}
                >
-                 
                  <div className="absolute inset-0 overflow-hidden">
                     <Image 
                        src={channel.image} 
@@ -374,7 +397,7 @@ export function LiveTVSection() {
                            </div>
                         )}
                        
-                       {/* --- GANTI VIDEO BIASA DENGAN HLS PLAYER --- */}
+                       {/* HLS PLAYER KHUSUS */}
                        <HlsVideoPlayer
                            src={channel.streamUrl}
                            className="w-full h-full object-cover opacity-90"
@@ -447,16 +470,12 @@ export function LiveTVSection() {
 
                <div className="relative w-full aspect-video bg-black flex items-center justify-center group">
                   {!isLimitReached ? (
-                     /* --- HLS PLAYER JUGA UNTUK MODAL --- */
                      <div className="w-full h-full">
                          <HlsVideoPlayer
                             src={selectedChannel.streamUrl}
                             className="w-full h-full object-contain"
                             onCanPlay={() => {}}
                          />
-                         {/* Note: Controls di HLS custom perlu setup lebih lanjut atau pakai library lengkap. 
-                             Tapi untuk HLS basic, 'controls' di tag video biasanya cukup di Chrome Desktop 
-                             setelah di-attach HLS.js. */}
                      </div>
                   ) : (
                      <div className="absolute inset-0 z-20 bg-[#050505] flex flex-col items-center justify-center text-center p-6">
