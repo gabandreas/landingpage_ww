@@ -10,6 +10,7 @@ import { Footer } from "@/components/sections/Footer";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { HowItWorks } from "@/components/sections/Discovery";
 import { CompatibleDevicesSection } from "@/components/sections/DevicesSection";
+import { LiveTVSection } from '@/components/sections/LiveTvSection'; // <--- Import
 
 export default function Home() {
   return (
@@ -19,6 +20,7 @@ export default function Home() {
         <main className="flex flex-col gap-10">
           <HeroSection />
           <FeaturesSection />
+          <LiveTVSection />
           <HowItWorks />
           <ContentHighlights />
           <CompatibleDevicesSection />
