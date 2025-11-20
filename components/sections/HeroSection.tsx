@@ -76,15 +76,14 @@ export function HeroSection() {
   const t = content[language];
 
   return (
-    // GANTI 1: Pakai min-h-[100dvh] untuk mobile browser support yang lebih baik
     <section ref={sectionRef} id="home" className="relative w-full overflow-hidden bg-[#040714] min-h-[100dvh] flex flex-col">
       
       {/* === 1. BACKGROUND ANIMATION (Marquee Effect) === */}
-      <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
+      {/* UPDATE: Opacity dinaikkan jadi 50% (opacity-50) agar lebih terlihat */}
+      <div className="absolute inset-0 overflow-hidden opacity-100 pointer-events-none">
          <div className="absolute inset-0 bg-gradient-to-b from-[#040714] via-transparent to-[#040714] z-10" />
          <div className="absolute inset-0 bg-gradient-to-r from-[#040714] via-[#040714]/60 to-[#040714] z-10" />
          
-         {/* GANTI 2: grid-cols-2 untuk mobile supaya poster ga kekecilan */}
          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 p-4 h-[150%] -mt-20 transform -rotate-6 scale-105 origin-center">
             
             {/* Kolom 1 */}
@@ -171,10 +170,8 @@ export function HeroSection() {
       </div>
 
       {/* === 3. CENTER CONTENT === */}
-      {/* GANTI 3: Padding disesuaikan, margin-top disesuaikan untuk mobile */}
       <div className="relative z-20 w-full max-w-5xl mx-auto flex-grow flex flex-col justify-center items-center px-4 text-center pt-20 pb-10 sm:py-0">
         
-        {/* GANTI 4: text-4xl untuk mobile, 7xl untuk desktop */}
         <motion.h1 
            className="text-4xl font-bold text-white sm:text-6xl md:text-7xl tracking-tight leading-tight" 
            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
@@ -214,13 +211,11 @@ export function HeroSection() {
       </div>
 
       {/* === 4. WORKFLOW STEPS === */}
-      {/* GANTI 5: Position absolute dihapus di mobile jika perlu, tapi di sini kita pakai flex-grow content di atas, jadi ini aman di bawah */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: 0.8 }}
         className="relative z-20 w-full border-t border-white/5 bg-black/40 backdrop-blur-md py-6"
       >
          <div className="max-w-5xl mx-auto px-6">
-            {/* Mobile: Flex-col (Turun ke bawah) | Desktop: Flex-row (Kesamping) */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-center gap-6 md:gap-0">
                
                {/* Step 1 */}
@@ -238,7 +233,7 @@ export function HeroSection() {
                    <svg className="w-4 h-4 text-white -ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                </div>
                
-               {/* Arrow Mobile (Down) - Agar user tau step berikutnya di bawah */}
+               {/* Arrow Mobile (Down) */}
                <div className="md:hidden text-white/10 rotate-90 self-center -my-2">
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                </div>

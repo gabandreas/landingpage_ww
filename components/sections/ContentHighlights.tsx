@@ -8,12 +8,13 @@ import { useLanguage } from '@/context/LanguageContext';
 // Tipe data category
 type CategoryKey = 'trending' | 'new' | 'action' | 'scifi' | 'drama' | 'adventure' | 'comedy' | 'thriller' | 'family' | 'fantasy';
 
+// Tambahkan properti 'logo' (opsional) untuk path logo channel
 const movies = [
-  { title: "Sight Unseen", image: "/images/sight_unseen.jpg", video: "/videos/Sight_Unseen.mp4", category: "trending" as CategoryKey },
-  { title: "Wicked", image: "/images/wicked.jpg", video: "/videos/wicked.mp4", category: "new" as CategoryKey },
-  { title: "Movie 3", image: "/images/wicked.jpg", video: "/videos/wicked.mp4", category: "action" as CategoryKey },
-  { title: "Movie 4", image: "/images/wicked.jpg", video: "/videos/wicked.mp4", category: "scifi" as CategoryKey },
-  { title: "Movie 5", image: "/images/wicked.jpg", video: "/videos/wicked.mp4", category: "drama" as CategoryKey },
+  { title: "Sight Unseen", image: "/images/sight_unseen.jpg", video: "/videos/Sight_Unseen.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" },
+  { title: "F9 Saga", image: "/images/the_fast_saga.jpg", video: "/videos/f9 SAGA.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" },
+  { title: "Godzilla Minus One", image: "/images/godzilla.jpg", video: "/videos/godzilla.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" },
+  { title: "SWAT", image: "/images/swatjpg.jpg", video: "/videos/swat.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" }, 
+  { title: "Movie 5", image: "/images/bullet_train.jpg", video: "/videos/bullet_train.mp4", category: "drama" as CategoryKey, logo: "/images/axn.png" },
   { title: "Movie 6", image: "/images/wicked.jpg", video: "/videos/wicked.mp4", category: "adventure" as CategoryKey },
   { title: "Movie 7", image: "/images/wicked.jpg", video: "/videos/wicked.mp4", category: "comedy" as CategoryKey },
   { title: "Movie 8", image: "/images/wicked.jpg", video: "/videos/wicked.mp4", category: "thriller" as CategoryKey },
@@ -23,17 +24,17 @@ const movies = [
 
 const content = {
   en: {
-    tagline: "What You Can Watch",
-    title: "Originals, films, and events.",
-    description: "Explore our vast library. Hover over any poster to preview the content instantly.",
+    tagline: "OUR CONTENT UNIVERSE",
+    title: "Premium Live TV, Movies, and Short Dramas.",
+    description: "Stream top channels like AXN and Rock Entertainment in real-time. Dive into a vast VOD library and binge-worthy short dramas anytime.",
     categories: {
       trending: "Trending Now", new: "New Release", action: "Action", scifi: "Sci-Fi", drama: "Drama", adventure: "Adventure", comedy: "Comedy", thriller: "Thriller", family: "Family", fantasy: "Fantasy"
     }
   },
   id: {
-    tagline: "Tontonan Pilihan",
-    title: "Film asli, bioskop, dan acara.",
-    description: "Jelajahi pustaka luas kami. Arahkan kursor ke poster mana pun untuk melihat cuplikan instan.",
+    tagline: "SEMESTA KONTEN KAMI",
+    title: "TV Langsung Premium, Film, dan Drama Pendek.",
+    description: "Tonton saluran top seperti AXN dan Rock Entertainment secara real-time. Nikmati pustaka VOD yang luas dan drama pendek seru kapan saja.",
     categories: {
       trending: "Sedang Tren", new: "Rilis Baru", action: "Aksi", scifi: "Fiksi Ilmiah", drama: "Drama", adventure: "Petualangan", comedy: "Komedi", thriller: "Thriller", family: "Keluarga", fantasy: "Fantasi"
     }
@@ -48,7 +49,6 @@ export function ContentHighlights() {
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  // UPDATE 1: Deteksi Mobile agar tidak auto-play video saat scroll
   const [isMobile, setIsMobile] = useState(true);
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -64,7 +64,6 @@ export function ContentHighlights() {
   return (
     <section
       id="content"
-      // UPDATE 2: Padding responsive (py-16 di mobile)
       className="w-full bg-[#040714] px-4 sm:px-6 py-16 lg:py-24"
       aria-label="Content Highlights"
     >
@@ -84,13 +83,12 @@ export function ContentHighlights() {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight">
             {t.title}
           </h2>
-          <p className="max-w-2xl text-sm sm:text-base md:text-lg text-gray-400 mx-auto md:mx-0">
+          <p className="max-w-3xl text-sm sm:text-base md:text-lg text-gray-400 mx-auto md:mx-0">
             {t.description}
           </p>
         </motion.div>
 
         {/* Grid Layout Film */}
-        {/* UPDATE 3: grid-cols-2 di mobile dengan gap-3 (lebih rapat) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
           {movies.map((movie, index) => {
             const isHovered = hoveredMovieIndex === index;
@@ -104,11 +102,29 @@ export function ContentHighlights() {
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ delay: index * 0.05, duration: 0.6 }}
                 className="relative aspect-[2/3] group rounded-lg sm:rounded-xl overflow-hidden bg-[#0a0f1c] border border-white/10 cursor-pointer shadow-lg"
-                // UPDATE 4: Matikan logic hover di mobile
                 onMouseEnter={() => !isMobile && setHoveredMovieIndex(index)}
                 onMouseLeave={() => !isMobile && setHoveredMovieIndex(null)}
                 onClick={() => handleVideoOpen(movie.video)}
               >
+                {/* Logo Channel (AXN, dll.) - Hanya muncul jika ada movie.logo */}
+                {movie.logo && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute top-2 left-2 sm:top-3 sm:left-3 z-30 pointer-events-none"
+                  >
+                    <Image 
+                      src={movie.logo} 
+                      alt="Channel Logo" 
+                      width={40} // Ukuran logo (sesuaikan)
+                      height={20} // Ukuran logo (sesuaikan)
+                      className="rounded-sm opacity-90 group-hover:opacity-100 transition-opacity duration-300" 
+                      style={{ width: 'auto', height: 'auto', maxWidth: '40px', maxHeight: '20px'}} // Ensure image scales nicely
+                    />
+                  </motion.div>
+                )}
+
                 {/* 1. Poster Image */}
                 <Image
                   src={movie.image}
@@ -117,11 +133,10 @@ export function ContentHighlights() {
                   className={`object-cover transition-opacity duration-500 ${
                     isHovered ? 'opacity-0' : 'opacity-100'
                   }`}
-                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw" // Optimized sizes
+                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
                 />
 
                 {/* 2. Video Preview (DESKTOP ONLY) */}
-                {/* UPDATE 5: Video preview hanya di-render jika bukan mobile */}
                 {!isMobile && (
                     <AnimatePresence>
                     {isHovered && (
@@ -149,8 +164,6 @@ export function ContentHighlights() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent pointer-events-none" />
                 
                 <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 z-20">
-                  {/* Kategori hanya muncul saat hover di desktop, tapi bisa kita munculkan default di mobile jika mau. 
-                      Disini saya biarkan logic hover group agar bersih. */}
                   <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-blue-400 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     {categoryName}
                   </p>
@@ -188,7 +201,6 @@ export function ContentHighlights() {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* UPDATE 6: Tombol close lebih besar area sentuhnya di mobile */}
               <button 
                 onClick={() => setActiveVideo(null)}
                 className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 text-white/70 hover:text-white transition-colors p-3 bg-black/50 rounded-full backdrop-blur-md"
