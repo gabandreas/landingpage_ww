@@ -12,10 +12,10 @@ const postersColumn1 = [
 ];
 const postersColumn2 = [
   '/images/the_exception.jpg', '/images/king_of_devil_island.jpg', '/images/happier_times.jpg', 
-  '/images/joy_of.jpg', '/images/italian_gigolo.jpg',
+  '/images/Dalam Nama Ibu.png', '/images/italian_gigolo.jpg',
 ];
 const postersColumn3 = [
-  '/images/pure_white.jpg', '/images/lalala.jpg', '/images/elalamein.jpg', 
+  '/images/Aku Bikin Bos Marah.png', '/images/lalala.jpg', '/images/Bosku Standar Ganda2.png', 
   '/images/a_tale.jpg', '/images/one_floor.jpg',
 ];
 

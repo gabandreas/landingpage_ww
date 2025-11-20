@@ -10,12 +10,12 @@ type CategoryKey = 'trending' | 'new' | 'action' | 'scifi' | 'drama' | 'adventur
 
 // Tambahkan properti 'logo' (opsional) untuk path logo channel
 const movies = [
-  { title: "Sight Unseen", image: "/images/sight_unseen_2.jpg", video: "/videos/Sight_Unseen.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" },
-  { title: "F9 Saga", image: "/images/f9.jpg", video: "/videos/f9 SAGA.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" },
-  { title: "Godzilla Minus One", image: "/images/godzilla.jpg", video: "/videos/godzilla.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" },
-  { title: "SWAT", image: "/images/swatjpg.jpg", video: "/videos/swat.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" }, 
-  { title: "Bullet Train", image: "/images/bullet_train.jpg", video: "/videos/bullet_train.mp4", category: "drama" as CategoryKey, logo: "/images/axn.png" },
-  { title: "The Little Comrade", image: "/images/the_little_comrade.jpg", video: "/videos/the_little_comrade.mkv", category: "adventure" as CategoryKey, logo: "/images/Cinemaworld.png" },
+  { title: "Karate Kid:Legends", image: "/images/karate_kid.jpg", video: "/videos/karate_kid.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" },
+  { title: "Buddy Daddies", image: "/images/buddy_daddies.jpg", video: "/videos/buddy_daddies.mp4", category: "anime" as CategoryKey, logo: "/images/Animax.png" },
+  { title: "Godzilla Minus One", image: "/images/godzilla.jpg", video: "/videos/godzilla.mp4", category: "adventure" as CategoryKey, logo: "/images/axn.png" },
+  { title: "Captain Phillips", image: "/images/captain_phillips.jpg", video: "/videos/captain_phillips.mp4", category: "action" as CategoryKey, logo: "/images/rock_action.png" }, 
+  { title: "Bullet Train", image: "/images/bullet_train.jpg", video: "/videos/bullet_train.mp4", category: "action" as CategoryKey, logo: "/images/axn.png" },
+  { title: "Black Clover", image: "/images/black_clover.jpg", video: "/videos/black_clover.mp4", category: "anime" as CategoryKey, logo: "/images/Animax.png" },
   { title: "What To Expect When You're Expecting", image: "/images/what.jpg", video: "/videos/what.mp4", category: "comedy" as CategoryKey, logo: "/images/rock_entertainment.png" },
   { title: "Twisted Metal", image: "/images/twisted_metal.jpg", video: "/videos/twisted_metal.mp4", category: "thriller" as CategoryKey, logo: "/images/axn.png" },
   { title: "The Wrong Daughter", image: "/images/the_wrong_daughter.jpg", video: "/videos/the_wrong_daughter.mp4", category: "horror" as CategoryKey, logo: "/images/rock_entertainment.png" },

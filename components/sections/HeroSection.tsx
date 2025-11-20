@@ -8,8 +8,8 @@ import { useLanguage } from '@/context/LanguageContext';
 // --- DATA CONTENT ---
 const content = {
   en: {
-    title: "Unlimited Entertainment",
-    subtitle: "Here. There. Everywhere.",
+    title: "Ultimate All-in-One Streaming.",
+    subtitle: "Short Drama, 1000+ Movies, and Premium Channels under one subscription.",
     cta_text: "Start Your Free Trial",
     cta_subtext: "Register in-app to unlock free access.",
     store: { get: "Get it on", download: "Download on", explore: "Explore on" },
@@ -20,8 +20,8 @@ const content = {
     ]
   },
   id: {
-    title: "Hiburan Tanpa Batas",
-    subtitle: "Disini. Disana. Dimana-mana.",
+    title: "Satu Aplikasi. Segala Hiburan.",
+    subtitle: "Drama Pendek, 1000+ Film Pemenang Penghargaan, & Saluran Premium hanya dengan satu langganan. ",
     cta_text: "Mulai Coba Gratis",
     cta_subtext: "Registrasi di aplikasi untuk akses gratis.",
     store: { get: "Temukan di", download: "Unduh di", explore: "Jelajahi di" },
@@ -34,9 +34,9 @@ const content = {
 };
 
 // --- MOVIE POSTERS ---
-const column1 = ["/images/sight_unseen.jpg", "/images/wicked.jpg", "/images/fbi.jpg", "/images/elalamein.jpg"];
+const column1 = ["/images/sight_unseen.jpg", "/images/Aku Bikin Bos Marah.png", "/images/fbi.jpg", "/images/elalamein.jpg"];
 const column2 = ["/images/king_of_devil_island.jpg", "/images/love_at_first_fight.jpg", "/images/mammal.jpg", "/images/joy_of.jpg"];
-const column3 = ["/images/seal_team.jpg", "/images/the_exception.jpg", "/images/sight_unseen.jpg", "/images/wicked.jpg"];
+const column3 = ["/images/seal_team.jpg", "/images/the_exception.jpg", "/images/Bosku Standar Ganda2.png", "/images/Dalam Nama Ibu.png"];
 
 // --- COMPONENT BUTTON ---
 interface StoreButtonProps { href: string; iconPath: React.ReactNode; subText: string; mainText: string; }
@@ -92,7 +92,7 @@ export function HeroSection() {
     <section ref={sectionRef} id="home" className="relative w-full overflow-hidden bg-black min-h-[100dvh] flex flex-col">
       
       {/* === 1. BACKGROUND ANIMATION (Marquee Effect) === */}
-      <div className="absolute inset-0 overflow-hidden opacity-100 pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden opacity-110 pointer-events-none">
          <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black z-10" />
          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-black z-10" />
          
