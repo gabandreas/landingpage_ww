@@ -35,9 +35,7 @@ export const metadata: Metadata = {
     template: "%s | WeWatch", 
   },
   description: "Stream 1000+ movies, premium live TV channels, and trending short dramas. Join WeWatch for the ultimate Asian entertainment experience.",
-  verification: {
-    google: 'xdgevr519dXPkZNPNT_e6bDLixAQu8qiwllpgSPdXE0', // Tempelkan HANYA kode konten yang ada di atribut "content"
-  },
+  
   // Keywords Strategis
   keywords: [
     "streaming", "movies", "tv shows", "watch online", "wewatch", 
@@ -98,7 +96,7 @@ export const metadata: Metadata = {
 
   // Verifikasi Webmaster (Isi kodenya nanti saat submit ke Google/Bing)
   verification: {
-    google: 'kode-verifikasi-google-anda', 
+    google: 'xdgevr519dXPkZNPNT_e6bDLixAQu8qiwllpgSPdXE0', 
     yandex: 'kode-verifikasi-yandex',
   },
 
