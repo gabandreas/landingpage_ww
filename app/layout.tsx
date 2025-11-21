@@ -6,27 +6,86 @@ import NextTopLoader from 'nextjs-toploader';
 import FramerWrapper from "@/components/FrammerWrapper";
 import CookieConsent from "@/components/CookieConsent";
 
-// 1. Import cookies dan GoogleAnalytics
+// Import untuk Logic Analytics & Cookies
 import { cookies } from 'next/headers';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 const inter = Inter({ subsets: ["latin"] });
 
-// ... (metadata kamu tetap sama) ...
+// Definisikan URL website (Ganti dengan domain aslimu jika sudah production)
+const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://landingpage-ww.vercel.app/';
 
-// 2. PENTING: Tambahkan kata kunci 'async' di sini
+// --- METADATA SEO LENGKAP ---
+export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "WeWatch | Free Trial Now",
+    template: "%s | WeWatch", // Agar halaman lain jadi "Judul | WeWatch"
+  },
+  description: "Stream unlimited movies and TV shows anytime, anywhere. Start your free trial today.",
+  keywords: ["streaming", "movies", "tv shows", "watch online", "wewatch", "free trial", "asian drama"],
+  authors: [{ name: "WeWatch Team" }],
+  creator: "WeWatch Inc.",
+  
+  // Logo / Favicon
+  icons: {
+    icon: '/images/wewatch-trimed.png', 
+    apple: '/images/wewatch-trimed.png',
+  },
+
+  // Tampilan Share di WhatsApp/FB/LinkedIn
+  openGraph: {
+    title: "WeWatch | Stream Unlimited Movies",
+    description: "Join WeWatch today to watch the latest movies and TV series.",
+    url: baseUrl,
+    siteName: "WeWatch",
+    images: [
+      {
+        url: '/images/wewatch-trimed.png', // Atau ganti gambar banner khusus share (size 1200x630)
+        width: 1200,
+        height: 630,
+        alt: "WeWatch Streaming Platform",
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+
+  // Tampilan Share di Twitter/X
+  twitter: {
+    card: 'summary_large_image',
+    title: "WeWatch | Free Trial Now",
+    description: "Stream unlimited movies and TV shows.",
+    images: ['/images/wewatch-trimed.png'],
+  },
+
+  // Konfigurasi Robot Google
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+};
+
+// --- ROOT LAYOUT (ASYNC) ---
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   
-  // 3. PENTING: Tambahkan 'await' di sini
+  // 1. Ambil status cookie consent dari server
   const cookieStore = await cookies(); 
   const consentCookie = cookieStore.get('wewatch_cookie_consent');
   const isConsentGiven = consentCookie?.value === 'true';
 
-  // Ambil GA ID dari env
+  // 2. Ambil GA ID dari environment variable
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
@@ -45,14 +104,16 @@ export default async function RootLayout({
         />
         
         <LanguageProvider>
+          {/* Bungkus children dengan FramerWrapper agar animasi transisi jalan */}
           <FramerWrapper>
             {children}
           </FramerWrapper>
-          {/* Banner Cookie Consent */}
+          
+          {/* Banner Cookie Consent (Muncul jika belum ada cookie) */}
           <CookieConsent />
         </LanguageProvider>
 
-        {/* Logic Google Analytics */}
+        {/* Logic Google Analytics: Hanya render jika user setuju & ID ada */}
         {isConsentGiven && gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
