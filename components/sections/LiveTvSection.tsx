@@ -81,7 +81,7 @@ const content = {
 // [DEV-LIMIT] BAGIAN 1: KONFIGURASI DURASI
 // Ubah angka ini (misal 999999) jika ingin mematikan limit.
 // ==================================================================================
-const DAILY_LIMIT_SECONDS = 999999; 
+const DAILY_LIMIT_SECONDS = 60; 
 
 // --- COMPONENT PLAYER (OPTIMIZED FOR CROSS-BROWSER) ---
 interface PlayerProps {
