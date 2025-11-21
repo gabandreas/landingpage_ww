@@ -160,7 +160,7 @@ export default function ContactPage() {
             
             {/* WhatsApp Card */}
             <motion.a 
-              href="https://wa.me/6281234567890" 
+              href="https://wa.me/62881010733762" 
               target="_blank"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -183,7 +183,7 @@ export default function ContactPage() {
 
             {/* Email Card */}
             <motion.a 
-              href="mailto:support@wewatch.asia"
+              href="mailto:info@wewatch.asia"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}

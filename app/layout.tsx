@@ -3,24 +3,32 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import NextTopLoader from 'nextjs-toploader';
-import FramerWrapper from "@/components/FrammerWrapper"; // Import wrapper yang baru dibuat
+import FramerWrapper from "@/components/FrammerWrapper";
+import CookieConsent from "@/components/CookieConsent";
+
+// 1. Import cookies dan GoogleAnalytics
+import { cookies } from 'next/headers';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "WeWatch",
-  description: "Stream unlimited movies and TV shows",
-  icons: {
-    icon: '/images/wewatch-trimed.png', 
-    apple: '/images/wewatch-trimed.png',
-  },
-};
+// ... (metadata kamu tetap sama) ...
 
-export default function RootLayout({
+// 2. PENTING: Tambahkan kata kunci 'async' di sini
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  
+  // 3. PENTING: Tambahkan 'await' di sini
+  const cookieStore = await cookies(); 
+  const consentCookie = cookieStore.get('wewatch_cookie_consent');
+  const isConsentGiven = consentCookie?.value === 'true';
+
+  // Ambil GA ID dari env
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
   return (
     <html lang="en">
       <body className={inter.className}>
@@ -37,11 +45,15 @@ export default function RootLayout({
         />
         
         <LanguageProvider>
-          {/* Bungkus children dengan FramerWrapper agar LazyMotion aktif di seluruh halaman */}
           <FramerWrapper>
             {children}
           </FramerWrapper>
+          {/* Banner Cookie Consent */}
+          <CookieConsent />
         </LanguageProvider>
+
+        {/* Logic Google Analytics */}
+        {isConsentGiven && gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
   );

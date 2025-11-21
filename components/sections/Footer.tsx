@@ -2,24 +2,22 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
-import { ExternalLink, Signal } from 'lucide-react'; // Tambah icon Signal buat variasi kalau mau
+import { ExternalLink, HelpCircle, Zap } from 'lucide-react'; // Tambah icon biar makin cakep
 
 const content = {
   en: {
     service: "Service",
-    support: "Help Center",
+    support: "Support",
     corporate: "Corporate",
     connect: "Connect",
     menu: {
-      // GANTI INI: Dari Live TV ke Speed Test
-      speedtest: "Internet Speed Test", 
       plans: "Subscription Plans",
-      advertise: "Advertise with Us",
-      faq: "FAQ & Support",
-      guide: "User Guide", 
-      contact: "Contact Us",
+      // advertise: "Advertise with Us",
+      // Menggabungkan FAQ & Guide menjadi satu destinasi "Help Center"
+      help_center: "Help Center", 
+      speedtest: "Internet Speed Test",
+      contact: "Contact Support",
       about_corp: "About WeWatch Corp.",
-      careers: "Careers",
       investor: "Investor Relations",
     },
     copyright: "© WeWatch and its related entities. All Rights Reserved.",
@@ -35,19 +33,17 @@ const content = {
   },
   id: {
     service: "Layanan",
-    support: "Pusat Bantuan",
+    support: "Bantuan",
     corporate: "Korporat",
     connect: "Ikuti Kami",
     menu: {
-      // GANTI INI: Dari Live TV ke Cek Kecepatan
-      speedtest: "Cek Kecepatan Internet",
       plans: "Paket Langganan",
       advertise: "Beriklan di WeWatch",
-      faq: "Tanya Jawab",
-      guide: "Panduan Pengguna",
-      contact: "Hubungi Kami",
+      // Menggabungkan FAQ & Guide menjadi satu destinasi "Pusat Bantuan"
+      help_center: "Pusat Bantuan",
+      speedtest: "Cek Kecepatan Internet",
+      contact: "Hubungi CS",
       about_corp: "Tentang WeWatch Corp.",
-      careers: "Karir",
       investor: "Hubungan Investor",
     },
     copyright: "© WeWatch dan entitas terkait. Hak Cipta Dilindungi.",
@@ -77,24 +73,33 @@ export function Footer() {
           <div className="flex flex-col gap-3 sm:gap-4">
             <h4 className="text-white font-semibold text-base">{t.service}</h4>
             <ul className="space-y-2 sm:space-y-3 text-gray-400">
+              <li><Link href="/subscription" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.plans}</Link></li>
+              {/* Speed Test sering dicari user yang buffering, jadi taruh link ke Help Center kategori teknis atau tool terpisah */}
               <li>
-                {/* Link ke halaman Speed Test (bisa dibuat nanti atau link ke fast.com sementara) */}
-                <Link href="/speedtest" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">
+                <Link href="/speedtest" className="hover:text-blue-400 transition-colors text-xs sm:text-sm flex items-center gap-2">
                   {t.menu.speedtest}
                 </Link>
               </li>
-              <li><Link href="/subscription" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.plans}</Link></li>
               <li><Link href="/advertise" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.advertise}</Link></li>
             </ul>
           </div>
 
-          {/* Column 2: Support */}
+          {/* Column 2: Support (Centralized) */}
           <div className="flex flex-col gap-3 sm:gap-4">
             <h4 className="text-white font-semibold text-base">{t.support}</h4>
             <ul className="space-y-2 sm:space-y-3 text-gray-400">
-              <li><Link href="/faq" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.faq}</Link></li>
-              <li><Link href="/guide" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.guide}</Link></li>
-              <li><Link href="/contact" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.contact}</Link></li>
+              <li>
+                {/* INI PERUBAHAN UTAMA: Link ke /faq sebagai Help Center utama */}
+                <Link href="/faq" className="hover:text-blue-400 transition-colors text-xs sm:text-sm flex items-center gap-2 font-medium text-white/90">
+                  <HelpCircle className="w-3 h-3" />
+                  {t.menu.help_center}
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">
+                  {t.menu.contact}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -112,22 +117,19 @@ export function Footer() {
                   {t.menu.investor} <ExternalLink className="w-3 h-3 opacity-50" />
                 </a>
               </li>
-              <li>
-                <a href="https://www.wewatch.asia/career.html" target="_blank" className="hover:text-blue-400 transition-colors text-xs sm:text-sm flex items-center gap-1">
-                  {t.menu.careers} <ExternalLink className="w-3 h-3 opacity-50" />
-                </a>
-              </li>
             </ul>
           </div>
 
           {/* Column 4: Connect */}
           <div className="flex flex-col gap-3 sm:gap-4">
             <h4 className="text-white font-semibold text-base">{t.connect}</h4>
+            {/* Social Media Icons sama seperti sebelumnya */}
             <div className="flex gap-4">
-              <a href="https://www.facebook.com/WeWatchAsia" className="text-white hover:text-blue-600 transition-colors">
+               {/* ... (Paste icon socmed kamu yang sebelumnya disini) ... */}
+               <a href="https://www.facebook.com/WeWatchAsia" className="text-white hover:text-blue-600 transition-colors">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-current" viewBox="0 0 24 24"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036c-2.048 0-2.733 1.092-2.733 2.807v1.165h3.708l-.475 3.667h-3.233v7.98h-5.08z" /></svg>
               </a>
-              <a href="https://twitter.com/wewatchasia" className="text-white hover:text-white transition-colors">
+              <a href="https://x.com/wewatchasia" className="text-white hover:text-white transition-colors">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
               </a>
               <a href="https://www.instagram.com/wewatchasia/" className="text-white hover:text-pink-500 transition-colors">
@@ -142,8 +144,10 @@ export function Footer() {
 
         <div className="my-8 h-px w-full bg-white/10" />
 
+        {/* Copyright & Store Buttons (Sama seperti sebelumnya) */}
         <div className="flex flex-col-reverse items-center justify-between gap-8 lg:flex-row">
-          <div className="flex flex-col items-center gap-4 lg:items-start">
+           {/* ... (Bagian Copyright dan StoreButton kamu yang lama) ... */}
+           <div className="flex flex-col items-center gap-4 lg:items-start">
             <p className="text-xs text-gray-500 text-center lg:text-left">
               {t.copyright} © {new Date().getFullYear()}.
             </p>
