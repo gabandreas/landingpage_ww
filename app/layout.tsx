@@ -9,6 +9,7 @@ import CookieConsent from "@/components/CookieConsent";
 // Import untuk Logic Analytics & Cookies
 import { cookies } from 'next/headers';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -115,6 +116,8 @@ export default async function RootLayout({
 
         {/* Logic Google Analytics: Hanya render jika user setuju & ID ada */}
         {isConsentGiven && gaId && <GoogleAnalytics gaId={gaId} />}
+        {isConsentGiven && gaId && <Analytics/>}
+        
       </body>
     </html>
   );

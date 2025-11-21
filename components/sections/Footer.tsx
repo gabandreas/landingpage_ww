@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
-import { ExternalLink, HelpCircle, Zap } from 'lucide-react'; // Tambah icon biar makin cakep
+import { ExternalLink, HelpCircle } from 'lucide-react'; 
 
 const content = {
   en: {
@@ -12,8 +12,8 @@ const content = {
     connect: "Connect",
     menu: {
       plans: "Subscription Plans",
-      // advertise: "Advertise with Us",
-      // Menggabungkan FAQ & Guide menjadi satu destinasi "Help Center"
+      // PASTIKAN INI ADA (Tadi mungkin hilang/dikomen)
+      advertise: "Advertise with Us", 
       help_center: "Help Center", 
       speedtest: "Internet Speed Test",
       contact: "Contact Support",
@@ -38,8 +38,8 @@ const content = {
     connect: "Ikuti Kami",
     menu: {
       plans: "Paket Langganan",
+      // PASTIKAN INI JUGA ADA (Harus simetris dengan yang English)
       advertise: "Beriklan di WeWatch",
-      // Menggabungkan FAQ & Guide menjadi satu destinasi "Pusat Bantuan"
       help_center: "Pusat Bantuan",
       speedtest: "Cek Kecepatan Internet",
       contact: "Hubungi CS",
@@ -74,22 +74,21 @@ export function Footer() {
             <h4 className="text-white font-semibold text-base">{t.service}</h4>
             <ul className="space-y-2 sm:space-y-3 text-gray-400">
               <li><Link href="/subscription" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.plans}</Link></li>
-              {/* Speed Test sering dicari user yang buffering, jadi taruh link ke Help Center kategori teknis atau tool terpisah */}
               <li>
                 <Link href="/speedtest" className="hover:text-blue-400 transition-colors text-xs sm:text-sm flex items-center gap-2">
                   {t.menu.speedtest}
                 </Link>
               </li>
+              {/* Link ini yang tadi bikin error karena datanya hilang di atas */}
               <li><Link href="/advertise" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.advertise}</Link></li>
             </ul>
           </div>
 
-          {/* Column 2: Support (Centralized) */}
+          {/* Column 2: Support */}
           <div className="flex flex-col gap-3 sm:gap-4">
             <h4 className="text-white font-semibold text-base">{t.support}</h4>
             <ul className="space-y-2 sm:space-y-3 text-gray-400">
               <li>
-                {/* INI PERUBAHAN UTAMA: Link ke /faq sebagai Help Center utama */}
                 <Link href="/faq" className="hover:text-blue-400 transition-colors text-xs sm:text-sm flex items-center gap-2 font-medium text-white/90">
                   <HelpCircle className="w-3 h-3" />
                   {t.menu.help_center}
@@ -123,9 +122,7 @@ export function Footer() {
           {/* Column 4: Connect */}
           <div className="flex flex-col gap-3 sm:gap-4">
             <h4 className="text-white font-semibold text-base">{t.connect}</h4>
-            {/* Social Media Icons sama seperti sebelumnya */}
             <div className="flex gap-4">
-               {/* ... (Paste icon socmed kamu yang sebelumnya disini) ... */}
                <a href="https://www.facebook.com/WeWatchAsia" className="text-white hover:text-blue-600 transition-colors">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-current" viewBox="0 0 24 24"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036c-2.048 0-2.733 1.092-2.733 2.807v1.165h3.708l-.475 3.667h-3.233v7.98h-5.08z" /></svg>
               </a>
@@ -144,10 +141,8 @@ export function Footer() {
 
         <div className="my-8 h-px w-full bg-white/10" />
 
-        {/* Copyright & Store Buttons (Sama seperti sebelumnya) */}
         <div className="flex flex-col-reverse items-center justify-between gap-8 lg:flex-row">
-           {/* ... (Bagian Copyright dan StoreButton kamu yang lama) ... */}
-           <div className="flex flex-col items-center gap-4 lg:items-start">
+          <div className="flex flex-col items-center gap-4 lg:items-start">
             <p className="text-xs text-gray-500 text-center lg:text-left">
               {t.copyright} © {new Date().getFullYear()}.
             </p>
