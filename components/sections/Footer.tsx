@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
-import { ExternalLink, HelpCircle } from 'lucide-react'; 
+// Tambahkan import Globe dari lucide-react
+import { ExternalLink, HelpCircle, Globe } from 'lucide-react'; 
 
 const content = {
   en: {
@@ -12,8 +13,7 @@ const content = {
     connect: "Connect",
     menu: {
       plans: "Subscription Plans",
-      // PASTIKAN INI ADA (Tadi mungkin hilang/dikomen)
-      advertise: "Advertise with Us", 
+      advertise: "Advertise with Us",
       help_center: "Help Center", 
       speedtest: "Internet Speed Test",
       contact: "Contact Support",
@@ -38,7 +38,6 @@ const content = {
     connect: "Ikuti Kami",
     menu: {
       plans: "Paket Langganan",
-      // PASTIKAN INI JUGA ADA (Harus simetris dengan yang English)
       advertise: "Beriklan di WeWatch",
       help_center: "Pusat Bantuan",
       speedtest: "Cek Kecepatan Internet",
@@ -60,11 +59,12 @@ const content = {
 };
 
 export function Footer() {
-  const { language } = useLanguage();
+  // 1. Ambil setLanguage dari context
+  const { language, setLanguage } = useLanguage();
   const t = content[language];
 
   return (
-    <footer className="w-full bg-[#040714] border-t border-white/10 pt-12 sm:pt-16 pb-8 text-sm">
+    <footer className="w-full bg-[#040714] border-t border-white/10 pt-12 sm:pt-16 pb-8 text-sm font-sans">
       <div className="mx-auto w-full max-w-7xl px-6">
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-10 sm:gap-10 mb-12">
@@ -79,7 +79,6 @@ export function Footer() {
                   {t.menu.speedtest}
                 </Link>
               </li>
-              {/* Link ini yang tadi bikin error karena datanya hilang di atas */}
               <li><Link href="/advertise" className="hover:text-blue-400 transition-colors text-xs sm:text-sm">{t.menu.advertise}</Link></li>
             </ul>
           </div>
@@ -141,8 +140,30 @@ export function Footer() {
 
         <div className="my-8 h-px w-full bg-white/10" />
 
+        {/* --- BOTTOM SECTION --- */}
         <div className="flex flex-col-reverse items-center justify-between gap-8 lg:flex-row">
           <div className="flex flex-col items-center gap-4 lg:items-start">
+            
+            {/* 2. Language Switcher (Simple & Lightweight) */}
+            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 hover:border-white/10 transition-colors mb-2">
+               <Globe className="w-3 h-3 text-gray-400" />
+               <div className="flex items-center gap-2 text-xs font-medium">
+                  <button 
+                    onClick={() => setLanguage('en')} 
+                    className={`transition-colors ${language === 'en' ? 'text-white font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+                  >
+                    English
+                  </button>
+                  <span className="text-gray-600">/</span>
+                  <button 
+                    onClick={() => setLanguage('id')} 
+                    className={`transition-colors ${language === 'id' ? 'text-white font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+                  >
+                    Bahasa
+                  </button>
+               </div>
+            </div>
+
             <p className="text-xs text-gray-500 text-center lg:text-left">
               {t.copyright} © {new Date().getFullYear()}.
             </p>
@@ -152,6 +173,7 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Store Buttons */}
           <div className="flex flex-wrap justify-center lg:justify-end gap-3">
              <StoreButton href="https://play.google.com/store/apps/details?id=com.wewatch.android" subText={t.store.get} mainText="Google Play" iconPath={<svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M3.06 2.45a2.6 2.6 0 0 0-.49 1.64v15.83c0 .64.18 1.21.49 1.64l.06.06 9.23-9.25v-.23L3.12 2.39l-.06.06z"/><path fill="#34A853" d="M16.62 14.95 12.35 10.7 3.06 19.92c.42.44 1.13.5 1.82.12l11.74-6.72z"/><path fill="#FBBC05" d="M16.62 9.06 4.88 2.35c-.69-.39-1.4-.31-1.82.12l9.29 9.23 4.27-2.64z"/><path fill="#EA4335" d="M16.62 14.95 21.1 12.5c.75-.42.75-1.12 0-1.54l-4.48-2.45-4.27 2.64 4.27 2.8z"/></svg>} />
              <StoreButton href="https://apps.apple.com/id/app/wewatch-everywhere/id1533557464" subText={t.store.download} mainText="App Store" iconPath={<svg className="w-5 h-5 sm:w-6 sm:h-6 fill-white" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.55-.83 1.21-1.35 1.9-1.5.12 1.6-1.49 3.19-3.28 3.26-.3-1.43 1.08-2.92 1.38-1.76z"/></svg>} />
