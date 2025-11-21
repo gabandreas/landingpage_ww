@@ -90,6 +90,9 @@ interface PlayerProps {
   className?: string;
   volume: number;
   isMuted: boolean;
+  // TAMBAHKAN DUA BARIS INI (tanda tanya artinya optional):
+  onWaiting?: () => void;
+  onPlaying?: () => void;
 }
 
 // ... import dan interface PlayerProps tetap sama ...
