@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import NextTopLoader from 'nextjs-toploader';
+import FramerWrapper from "@/components/FrammerWrapper"; // Import wrapper yang baru dibuat
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -10,8 +11,8 @@ export const metadata: Metadata = {
   title: "WeWatch",
   description: "Stream unlimited movies and TV shows",
   icons: {
-    icon: '/images/wewatch-trimed.png', // Ganti dengan path logo Anda di folder public
-    apple: '/images/wewatch-trimed.png', // Untuk icon di iPhone/iPad
+    icon: '/images/wewatch-trimed.png', 
+    apple: '/images/wewatch-trimed.png',
   },
 };
 
@@ -36,7 +37,10 @@ export default function RootLayout({
         />
         
         <LanguageProvider>
-          {children}
+          {/* Bungkus children dengan FramerWrapper agar LazyMotion aktif di seluruh halaman */}
+          <FramerWrapper>
+            {children}
+          </FramerWrapper>
         </LanguageProvider>
       </body>
     </html>

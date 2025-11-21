@@ -3,8 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
-import { useState, useEffect, useRef, MouseEvent, TouchEvent, ReactNode, useCallback } from 'react';
-import Hls from 'hls.js';
+// ✅ FIX: Tambahkan 'ReactNode' di sini agar tidak error saat Build
+import { useState, useEffect, useRef, MouseEvent, TouchEvent, useCallback, ReactNode } from 'react';
 
 // --- DATA CHANNEL ---
 const channels = [
@@ -45,8 +45,8 @@ const channels = [
   },
   { 
     name: "Kompas TV", 
-    logo: "/images/kompas-removebg-preview.png", 
-    image: "/images/kompas-removebg-preview.png", 
+    logo: "/images/kompas.jpg", 
+    image: "/images/kompas.jpg", 
     linkUrl: "#",
     streamUrl: "https://openindo.wewatch.asia/nl.m3u8?id=1050"
   },
@@ -85,8 +85,7 @@ const content = {
 
 const DAILY_LIMIT_SECONDS = 60;
 
-// --- ROBUST HLS PLAYER COMPONENT ---
-// Komponen ini menangani semua logika player agar komponen utama bersih
+// --- COMPONENT PLAYER (LAZY LOADED HLS) ---
 function HlsVideoPlayer({ src, onCanPlay, className }: { src: string, onCanPlay: () => void, className?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -94,64 +93,71 @@ function HlsVideoPlayer({ src, onCanPlay, className }: { src: string, onCanPlay:
     const video = videoRef.current;
     if (!video) return;
 
-    let hls: Hls | null = null;
+    let hlsInstance: any = null;
 
-    // Logika Play yang Aman (Promise handling)
     const attemptPlay = () => {
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch((error) => {
-          console.warn("Autoplay prevented:", error);
-          // Biasanya gagal karena user belum interaksi (klik), tapi karena muted harusnya aman.
-        });
+        playPromise.catch(() => {});
       }
     };
 
-    // 1. CEK SAFARI / NATIVE HLS (Prioritas Utama untuk Apple)
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = src;
-      video.addEventListener('loadedmetadata', attemptPlay);
-    } 
-    // 2. CEK HLS.JS (Untuk Chrome/Edge/Firefox/Windows)
-    else if (Hls.isSupported()) {
-      hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true, // Mode latensi rendah untuk live
-        autoStartLoad: true,
-      });
-      
-      hls.loadSource(src);
-      hls.attachMedia(video);
-      
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        attemptPlay();
-      });
+    const initPlayer = async () => {
+      // 1. Cek Native HLS (Safari/iOS) - Paling ringan
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = src;
+        video.addEventListener('loadedmetadata', attemptPlay);
+      } 
+      // 2. Cek Support MSE (Chrome/Firefox/Edge) - Butuh Hls.js
+      else if (typeof window !== 'undefined' && window.MediaSource) {
+        try {
+          // ✅ OPTIMASI: Dynamic Import HLS hanya saat komponen ini dipanggil
+          const Hls = (await import('hls.js')).default;
 
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          console.error("HLS Fatal Error:", data);
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              hls?.startLoad(); // Coba start ulang kalau putus
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              hls?.recoverMediaError(); // Coba recover
-              break;
-            default:
-              hls?.destroy();
-              break;
+          if (Hls.isSupported()) {
+            hlsInstance = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              autoStartLoad: true,
+            });
+            
+            hlsInstance.loadSource(src);
+            hlsInstance.attachMedia(video);
+            
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+              attemptPlay();
+            });
+
+            hlsInstance.on(Hls.Events.ERROR, (_event: any, data: any) => {
+              if (data.fatal) {
+                switch (data.type) {
+                  case Hls.ErrorTypes.NETWORK_ERROR:
+                    hlsInstance?.startLoad();
+                    break;
+                  case Hls.ErrorTypes.MEDIA_ERROR:
+                    hlsInstance?.recoverMediaError();
+                    break;
+                  default:
+                    hlsInstance?.destroy();
+                    break;
+                }
+              }
+            });
           }
+        } catch (error) {
+          console.error("Failed to load HLS library", error);
         }
-      });
-    }
+      }
+    };
 
-    // Cleanup saat video di-unmount (mouse leave)
+    initPlayer();
+
     return () => {
-      if (hls) hls.destroy();
+      if (hlsInstance) hlsInstance.destroy();
       if (video) {
          video.removeEventListener('loadedmetadata', attemptPlay);
          video.removeAttribute('src');
-         video.load(); // Stop buffering
+         video.load();
       }
     };
   }, [src]);
@@ -160,10 +166,9 @@ function HlsVideoPlayer({ src, onCanPlay, className }: { src: string, onCanPlay:
     <video
       ref={videoRef}
       className={className}
-      muted // WAJIB: Autoplay ga akan jalan kalau ga muted
-      playsInline // WAJIB: Agar jalan di Safari iPhone
+      muted
+      playsInline
       loop
-      // crossOrigin="anonymous" // Kadang diperlukan, tapi kadang bikin error CORS. Coba uncomment jika masih gagal.
       onCanPlay={onCanPlay}
     />
   );
@@ -175,18 +180,15 @@ export function LiveTVSection() {
   const { language } = useLanguage();
   const t = content[language];
   
-  // UI State
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Modal & Timer State
   const [selectedChannel, setSelectedChannel] = useState<typeof channels[0] | null>(null);
   const [timeLeft, setTimeLeft] = useState(DAILY_LIMIT_SECONDS);
   const [isLimitReached, setIsLimitReached] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Scroll & Drag State
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDown, setIsDown] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -194,12 +196,34 @@ export function LiveTVSection() {
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const autoScrollRef = useRef<number | null>(null);
   const hasMoved = useRef(false);
+  
+  // ✅ OPTIMASI: State untuk mengecek apakah section terlihat di layar
+  const [isInView, setIsInView] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const infiniteChannels = [...channels, ...channels, ...channels, ...channels];
 
-  // Auto Scroll Logic
+  // ✅ OPTIMASI: Observer untuk pause animasi jika tidak di viewport
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.1 } // Trigger saat 10% section terlihat
+    );
+
+    if (scrollContainerRef.current) {
+      observer.observe(scrollContainerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Auto Scroll Logic (Hanya jalan jika visible)
+  useEffect(() => {
+    // Jika tidak terlihat di layar, jangan jalankan requestAnimationFrame (Hemat CPU)
+    if (!isInView) return;
+
     const scroll = () => {
       if (scrollContainerRef.current && isAutoScrolling && !isDown && !selectedChannel) {
         scrollContainerRef.current.scrollLeft += 0.8; 
@@ -209,13 +233,15 @@ export function LiveTVSection() {
       }
       autoScrollRef.current = requestAnimationFrame(scroll);
     };
+    
     autoScrollRef.current = requestAnimationFrame(scroll);
+    
     return () => {
       if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
     };
-  }, [isAutoScrolling, isDown, selectedChannel]);
+  }, [isAutoScrolling, isDown, selectedChannel, isInView]); // Tambahkan isInView dependency
 
-  // Hover Logic (Debounced)
+  // Hover Logic
   const handleMouseEnterCard = (index: number) => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     hoverTimeoutRef.current = setTimeout(() => {
@@ -230,7 +256,7 @@ export function LiveTVSection() {
     setIsVideoLoading(false);
   };
 
-  // Drag Logic
+  // Drag Handlers
   const handleMouseDown = useCallback((e: MouseEvent) => {
     setIsDown(true);
     setIsAutoScrolling(false);
@@ -396,14 +422,11 @@ export function LiveTVSection() {
                                <div className="w-6 h-6 border-2 border-white/20 border-t-blue-500 rounded-full animate-spin" />
                            </div>
                         )}
-                       
-                       {/* HLS PLAYER KHUSUS */}
                        <HlsVideoPlayer
                            src={channel.streamUrl}
                            className="w-full h-full object-cover opacity-90"
                            onCanPlay={() => setIsVideoLoading(false)}
                        />
-                       
                        <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)] pointer-events-none" />
                      </motion.div>
                    )}
@@ -449,6 +472,7 @@ export function LiveTVSection() {
               className="relative w-full max-w-5xl bg-[#0a0f1c] rounded-xl md:rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex flex-col max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
+               {/* MODAL HEADER */}
                <div className="flex justify-between items-center p-3 md:p-4 bg-[#121826] border-b border-white/5">
                   <div className="flex items-center gap-3 md:gap-4">
                       <div className="relative h-6 w-16 md:h-8 md:w-24">
@@ -468,6 +492,7 @@ export function LiveTVSection() {
                   </div>
                </div>
 
+               {/* VIDEO PLAYER AREA */}
                <div className="relative w-full aspect-video bg-black flex items-center justify-center group">
                   {!isLimitReached ? (
                      <div className="w-full h-full">
@@ -486,24 +511,9 @@ export function LiveTVSection() {
                         <p className="text-gray-400 max-w-md mb-6 text-xs md:text-base">{t.limit_reached_desc}</p>
                         
                         <div className="flex flex-col sm:flex-row justify-center gap-3 w-full max-w-2xl mx-auto">
-                          <StoreButton 
-                            href="https://play.google.com/store/apps/details?id=com.wewatch.android" 
-                            subText={t.store.get} 
-                            mainText="Google Play" 
-                            iconPath={<svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M3.06 2.45a2.6 2.6 0 0 0-.49 1.64v15.83c0 .64.18 1.21.49 1.64l.06.06 9.23-9.25v-.23L3.12 2.39l-.06.06z"/><path fill="#34A853" d="M16.62 14.95 12.35 10.7 3.06 19.92c.42.44 1.13.5 1.82.12l11.74-6.72z"/><path fill="#FBBC05" d="M16.62 9.06 4.88 2.35c-.69-.39-1.4-.31-1.82.12l9.29 9.23 4.27-2.64z"/><path fill="#EA4335" d="M16.62 14.95 21.1 12.5c.75-.42.75-1.12 0-1.54l-4.48-2.45-4.27 2.64 4.27 2.8z"/></svg>} 
-                          />
-                          <StoreButton 
-                            href="https://apps.apple.com/id/app/wewatch-everywhere/id1533557464" 
-                            subText={t.store.download} 
-                            mainText="App Store" 
-                            iconPath={<svg className="w-5 h-5 md:w-6 md:h-6 fill-white" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.55-.83 1.21-1.35 1.9-1.5.12 1.6-1.49 3.19-3.28 3.26-.3-1.43 1.08-2.92 1.38-1.76z"/></svg>} 
-                          />
-                          <StoreButton 
-                            href="https://appgallery.huawei.com/app/C104739437" 
-                            subText={t.store.explore} 
-                            mainText="AppGallery" 
-                            iconPath={<svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24"><path fill="#C7000B" d="M7.4 2h9.2c3.2 0 5.4 2.2 5.4 5.4v9.2c0 3.2-2.2 5.4-5.4 5.4H7.4C4.2 22 2 19.8 2 16.6V7.4C2 4.2 4.2 2 7.4 2z"/><path fill="#FFF" d="M16.5 13.5c0 .6-.3 1.1-.7 1.5-.4.4-1 .6-1.5.7-.6 0-1.2-.2-1.6-.5l-4.8-3.2c-.7-.5-1.1-1.2-1.1-2 0-.8.4-1.5 1.1-2l4.8-3.2c.4-.3 1-.5 1.6-.5.6 0 1.1.2 1.5.7.4.4.7.9.7 1.5v7z" opacity=".9"/><path fill="#FFF" d="M15.3 13.8c-.3.3-.7.5-1.1.5-.4 0-.8-.1-1.1-.3l-3.6-2.4c-.5-.3-.8-.9-.8-1.5 0-.6.3-1.1.8-1.5l3.6-2.4c.3-.2.7-.3 1.1-.3.4 0 .8.2 1.1.5.3.3.5.7.5 1.2v4.8c0 .5-.2.9-.5 1.2z"/></svg>} 
-                          />
+                          <StoreButton href="https://play.google.com/store/apps/details?id=com.wewatch.android" subText={t.store.get} mainText="Google Play" iconPath={<svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M3.06 2.45a2.6 2.6 0 0 0-.49 1.64v15.83c0 .64.18 1.21.49 1.64l.06.06 9.23-9.25v-.23L3.12 2.39l-.06.06z"/><path fill="#34A853" d="M16.62 14.95 12.35 10.7 3.06 19.92c.42.44 1.13.5 1.82.12l11.74-6.72z"/><path fill="#FBBC05" d="M16.62 9.06 4.88 2.35c-.69-.39-1.4-.31-1.82.12l9.29 9.23 4.27-2.64z"/><path fill="#EA4335" d="M16.62 14.95 21.1 12.5c.75-.42.75-1.12 0-1.54l-4.48-2.45-4.27 2.64 4.27 2.8z"/></svg>} />
+                          <StoreButton href="https://apps.apple.com/id/app/wewatch-everywhere/id1533557464" subText={t.store.download} mainText="App Store" iconPath={<svg className="w-5 h-5 md:w-6 md:h-6 fill-white" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.55-.83 1.21-1.35 1.9-1.5.12 1.6-1.49 3.19-3.28 3.26-.3-1.43 1.08-2.92 1.38-1.76z"/></svg>} />
+                          <StoreButton href="https://appgallery.huawei.com/app/C104739437" subText={t.store.explore} mainText="AppGallery" iconPath={<svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24"><path fill="#C7000B" d="M7.4 2h9.2c3.2 0 5.4 2.2 5.4 5.4v9.2c0 3.2-2.2 5.4-5.4 5.4H7.4C4.2 22 2 19.8 2 16.6V7.4C2 4.2 4.2 2 7.4 2z"/><path fill="#FFF" d="M16.5 13.5c0 .6-.3 1.1-.7 1.5-.4.4-1 .6-1.5.7-.6 0-1.2-.2-1.6-.5l-4.8-3.2c-.7-.5-1.1-1.2-1.1-2 0-.8.4-1.5 1.1-2l4.8-3.2c.4-.3 1-.5 1.6-.5.6 0 1.1.2 1.5.7.4.4.7.9.7 1.5v7z" opacity=".9"/><path fill="#FFF" d="M15.3 13.8c-.3.3-.7.5-1.1.5-.4 0-.8-.1-1.1-.3l-3.6-2.4c-.5-.3-.8-.9-.8-1.5 0-.6.3-1.1.8-1.5l3.6-2.4c.3-.2.7-.3 1.1-.3.4 0 .8.2 1.1.5.3.3.5.7.5 1.2v4.8c0 .5-.2.9-.5 1.2z"/></svg>} />
                         </div>
                      </div>
                   )}
@@ -522,6 +532,7 @@ export function LiveTVSection() {
   );
 }
 
+// Tipe ReactNode sudah diimport di atas
 interface StoreButtonProps {
   href: string;
   subText: string;
